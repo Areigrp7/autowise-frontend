@@ -9,6 +9,8 @@ import QuoteBidding from './pages/QuoteBidding';
 import Cart from './pages/Cart';
 import MyGarage from './pages/MyGarage';
 import NotFound from './pages/NotFound';
+import Register from './pages/Register'; // Import Register component
+import Login from './pages/Login'; // Import Login component
 
 const queryClient = new QueryClient();
 
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/dashboard" element={<MyGarage />} />
           <Route path="/my-garage" element={<MyGarage />} />
           <Route path="/cart" element={<Cart />} />
+          <Route path="/register" element={<Register />} /> {/* Add Register route */}
+          <Route path="/login" element={<Login />} /> {/* Add Login route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
