@@ -82,8 +82,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2">
-              <Car className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">AutoWise</span>
+              <img src="/autowise_logo_transparent.webp" alt="AutoWise Logo" className="h-28" />
             </Link>
 
             {/* Navigation */}
