@@ -6,11 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { CustomSelect } from '@/components/CustomSelect';
 import Layout from '@/components/Layout';
-import { 
-  Search, 
-  MapPin, 
-  Clock, 
-  Star, 
+import {
+  Search,
+  MapPin,
+  Clock,
+  Star,
   TrendingUp,
   Shield,
   Zap,
@@ -21,8 +21,10 @@ import {
   CheckCircle,
   ShoppingCart
 } from 'lucide-react';
+import { useCart } from '../context/CartContext'; // Import useCart
 
 interface Deal {
+  id: number;
   part: string;
   brand: string;
   originalPrice: number;
@@ -47,6 +49,7 @@ export default function HomePage() {
   const [selectedModel, setSelectedModel] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const { addToCart } = useCart(); // Use the cart hook
 
   const years = Array.from({ length: 25 }, (_, i) => ({
     value: (2024 - i).toString(),
@@ -92,6 +95,7 @@ export default function HomePage() {
 
   const featuredDeals: Deal[] = [
     {
+      id: 1,
       part: 'Brake Pads Set',
       brand: 'Brembo',
       originalPrice: 129.99,
@@ -101,6 +105,7 @@ export default function HomePage() {
       badge: 'Best Seller'
     },
     {
+      id: 2,
       part: 'Oil Filter',
       brand: 'Bosch',
       originalPrice: 24.99,
@@ -110,6 +115,7 @@ export default function HomePage() {
       badge: 'OEM Quality'
     },
     {
+      id: 3,
       part: 'Air Filter',
       brand: 'K&N',
       originalPrice: 49.99,
@@ -156,7 +162,14 @@ export default function HomePage() {
   };
 
   const handleAddToCart = (deal: Deal) => {
-    console.log('Adding to cart:', deal);
+    addToCart({
+      id: deal.id.toString(), // Convert to string for CartContext
+      name: deal.part,
+      brand: deal.brand,
+      price: deal.salePrice,
+      image_url: '/api/placeholder/300/200', // Assuming a placeholder image for deals
+      type: 'part',
+    });
     navigate('/cart');
   };
 
@@ -180,7 +193,7 @@ export default function HomePage() {
         <div className="container mx-auto text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-              Compare Parts, Connect with 
+              Compare Parts, Connect with
               <span className="text-blue-600"> Trusted Mechanics</span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -265,7 +278,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-gray-900">Today's Featured Deals</h2>
             <Button variant="outline" onClick={handleViewAllDeals}>View All Deals</Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredDeals.map((deal, index) => (
               <Card key={`deal-${index}`} className="hover:shadow-lg transition-shadow">
@@ -286,7 +299,7 @@ export default function HomePage() {
                     </div>
                     <span className="text-sm text-gray-500">({deal.reviews} reviews)</span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-2xl font-bold text-green-600">${deal.salePrice}</span>
                     <span className="text-lg text-gray-500 line-through">${deal.originalPrice}</span>
@@ -294,7 +307,7 @@ export default function HomePage() {
                       {Math.round((1 - deal.salePrice / deal.originalPrice) * 100)}% OFF
                     </Badge>
                   </div>
-                  
+
                   <Button className="w-full" onClick={() => handleAddToCart(deal)}>
                     <ShoppingCart className="h-4 w-4 mr-2" />
                     Add to Cart
@@ -316,7 +329,7 @@ export default function HomePage() {
               View on Map
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {nearbyShops.map((shop, index) => (
               <Card key={`shop-${index}`} className="hover:shadow-lg transition-shadow">
@@ -344,12 +357,12 @@ export default function HomePage() {
                       ))}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center text-sm text-green-600 mb-4">
                     <Clock className="h-4 w-4 mr-1" />
                     Next available: {shop.nextAvailable}
                   </div>
-                  
+
                   <Button className="w-full" variant="outline" onClick={() => handleGetQuote(shop)}>
                     <Wrench className="h-4 w-4 mr-2" />
                     Get Quote
@@ -370,7 +383,7 @@ export default function HomePage() {
               Get the best deals and service in just a few simple steps
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
               <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -379,7 +392,7 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold mb-2">1. Add Your Vehicle</h3>
               <p className="text-gray-600">Tell us about your car to get compatible parts and local service options.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="h-8 w-8 text-green-600" />
@@ -387,7 +400,7 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold mb-2">2. Compare Parts</h3>
               <p className="text-gray-600">Browse thousands of parts with real-time pricing from trusted suppliers.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="h-8 w-8 text-purple-600" />
@@ -395,7 +408,7 @@ export default function HomePage() {
               <h3 className="text-lg font-semibold mb-2">3. Get Quotes</h3>
               <p className="text-gray-600">Receive competitive installation quotes from verified mechanics nearby.</p>
             </div>
-            
+
             <div className="text-center">
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="h-8 w-8 text-orange-600" />
@@ -413,7 +426,7 @@ export default function HomePage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose AutoWise?</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="text-center p-6">
               <DollarSign className="h-12 w-12 text-green-600 mx-auto mb-4" />
@@ -422,7 +435,7 @@ export default function HomePage() {
                 Compare prices from multiple suppliers and get competitive quotes from local mechanics.
               </CardDescription>
             </Card>
-            
+
             <Card className="text-center p-6">
               <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
               <CardTitle className="mb-2">Verified Quality</CardTitle>
@@ -430,7 +443,7 @@ export default function HomePage() {
                 All parts and shops are verified for quality and authenticity. Your satisfaction is guaranteed.
               </CardDescription>
             </Card>
-            
+
             <Card className="text-center p-6">
               <Zap className="h-12 w-12 text-purple-600 mx-auto mb-4" />
               <CardTitle className="mb-2">Fast & Convenient</CardTitle>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,43 +8,67 @@ import { CustomSelect } from '@/components/CustomSelect';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import Layout from '@/components/Layout';
-import { 
-  Search, 
-  Filter, 
-  Star, 
-  ShoppingCart, 
+import {
+  Search,
+  Filter,
+  Star,
+  ShoppingCart,
   Heart,
   Shield,
   Truck,
   GitCompare,
   Grid,
   List,
-  Award
+  Award,
+  Loader2
 } from 'lucide-react';
+import { useCart } from '../context/CartContext'; // Import useCart
+import { fetchParts } from '../lib/apiClient';
 
 interface Part {
-  id: string;
+  id: number;
   name: string;
   brand: string;
   price: number;
-  originalPrice?: number;
+  original_price?: number;
   rating: number;
   reviews: number;
-  isOem: boolean;
+  is_oem: boolean;
   seller: string;
   shipping: string;
   warranty: string;
-  inStock: boolean;
-  image: string;
-  bestValueScore: number;
+  in_stock: boolean;
+  image_url: string;
+  best_value_score: number;
   features: string[];
   compatibility: string[];
+  category: string;
 }
 
 export default function PartsSearchPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+  const { addToCart } = useCart(); // Use the cart hook
+
+  const [parts, setParts] = useState<Part[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getParts = async () => {
+      try {
+        const data = await fetchParts();
+        setParts(data);
+      } catch (err) {
+        setError('Failed to fetch parts');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    getParts();
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || 'brake pads');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [priceRange, setPriceRange] = useState([0, 500]);
@@ -60,92 +84,14 @@ export default function PartsSearchPage() {
     model: searchParams.get('model') || 'Camry'
   });
 
-  // Mock parts data
-  const allParts: Part[] = [
-    {
-      id: '1',
-      name: 'Premium Ceramic Brake Pads - Front Set',
-      brand: 'Brembo',
-      price: 89.99,
-      originalPrice: 129.99,
-      rating: 4.8,
-      reviews: 1247,
-      isOem: false,
-      seller: 'AutoZone',
-      shipping: 'Free 2-day shipping',
-      warranty: '3 years / 36,000 miles',
-      inStock: true,
-      image: '/api/placeholder/300/200',
-      bestValueScore: 9.2,
-      features: ['Low dust formula', 'Quiet operation', 'Extended wear'],
-      compatibility: ['2019-2024 Toyota Camry', '2020-2024 Honda Accord']
-    },
-    {
-      id: '2',
-      name: 'OEM Brake Pad Set - Front',
-      brand: 'Toyota',
-      price: 149.99,
-      rating: 4.9,
-      reviews: 892,
-      isOem: true,
-      seller: 'Toyota Dealer',
-      shipping: '3-5 business days',
-      warranty: '2 years / 24,000 miles',
-      inStock: true,
-      image: '/api/placeholder/300/200',
-      bestValueScore: 8.7,
-      features: ['OEM specification', 'Perfect fit', 'Factory quality'],
-      compatibility: ['2019-2024 Toyota Camry']
-    },
-    {
-      id: '3',
-      name: 'Performance Brake Pads - Sport',
-      brand: 'Hawk Performance',
-      price: 124.99,
-      originalPrice: 159.99,
-      rating: 4.6,
-      reviews: 634,
-      isOem: false,
-      seller: 'Summit Racing',
-      shipping: 'Free shipping over $99',
-      warranty: '1 year / 12,000 miles',
-      inStock: false,
-      image: '/api/placeholder/300/200',
-      bestValueScore: 8.1,
-      features: ['High temperature resistance', 'Aggressive bite', 'Track tested'],
-      compatibility: ['2019-2024 Toyota Camry', '2018-2024 Honda Civic Si']
-    },
-    {
-      id: '4',
-      name: 'Economy Brake Pads - Front',
-      brand: 'Bosch',
-      price: 54.99,
-      rating: 4.3,
-      reviews: 423,
-      isOem: false,
-      seller: 'Amazon',
-      shipping: 'Prime 1-day delivery',
-      warranty: '1 year / 12,000 miles',
-      inStock: true,
-      image: '/api/placeholder/300/200',
-      bestValueScore: 7.8,
-      features: ['Budget friendly', 'Reliable performance', 'Easy installation'],
-      compatibility: ['2015-2024 Toyota Camry', '2016-2024 Honda Accord']
-    }
-  ];
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(new Set(parts.map(part => part.category)));
+    return [{ value: '', label: 'All Categories' }, ...uniqueCategories.map(category => ({ value: category, label: category }))];
+  }, [parts]);
 
-  const categories = [
-    { value: '', label: 'All Categories' },
-    { value: 'Brake System', label: 'Brake System' },
-    { value: 'Engine', label: 'Engine' },
-    { value: 'Suspension', label: 'Suspension' },
-    { value: 'Electrical', label: 'Electrical' },
-    { value: 'Filters', label: 'Filters' },
-    { value: 'Fluids', label: 'Fluids' },
-    { value: 'Belts & Hoses', label: 'Belts & Hoses' }
-  ];
-
-  const brands = ['Brembo', 'Toyota', 'Hawk Performance', 'Bosch', 'ACDelco', 'Motorcraft', 'Denso'];
+  const brands = useMemo(() => {
+    return Array.from(new Set(parts.map(part => part.brand)));
+  }, [parts]);
 
   const sortOptions = [
     { value: 'bestValue', label: 'Best Value' },
@@ -157,14 +103,19 @@ export default function PartsSearchPage() {
 
   // Filter and sort parts
   const filteredParts = useMemo(() => {
-    const filtered = allParts.filter(part => {
+    let currentParts = parts;
+    if (selectedCategory) {
+      currentParts = currentParts.filter(part => part.category === selectedCategory);
+    }
+
+    const filtered = currentParts.filter(part => {
       const matchesSearch = part.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            part.brand.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesPrice = part.price >= priceRange[0] && part.price <= priceRange[1];
       const matchesBrand = selectedBrands.length === 0 || selectedBrands.includes(part.brand);
-      const matchesOem = !oemOnly || part.isOem;
-      const matchesStock = !inStockOnly || part.inStock;
-      
+      const matchesOem = !oemOnly || part.is_oem;
+      const matchesStock = !inStockOnly || part.in_stock;
+
       return matchesSearch && matchesPrice && matchesBrand && matchesOem && matchesStock;
     });
 
@@ -172,7 +123,7 @@ export default function PartsSearchPage() {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'bestValue':
-          return b.bestValueScore - a.bestValueScore;
+          return b.best_value_score - a.best_value_score;
         case 'priceLow':
           return a.price - b.price;
         case 'priceHigh':
@@ -187,18 +138,18 @@ export default function PartsSearchPage() {
     });
 
     return filtered;
-  }, [searchQuery, priceRange, selectedBrands, oemOnly, inStockOnly, sortBy]);
+  }, [parts, searchQuery, selectedCategory, priceRange, selectedBrands, oemOnly, inStockOnly, sortBy]);
 
   const toggleBrand = (brand: string) => {
-    setSelectedBrands(prev => 
-      prev.includes(brand) 
+    setSelectedBrands(prev =>
+      prev.includes(brand)
         ? prev.filter(b => b !== brand)
         : [...prev, brand]
     );
   };
 
   const toggleCompare = (partId: string) => {
-    setCompareList(prev => 
+    setCompareList(prev =>
       prev.includes(partId)
         ? prev.filter(id => id !== partId)
         : prev.length < 3 ? [...prev, partId] : prev
@@ -213,7 +164,15 @@ export default function PartsSearchPage() {
   };
 
   const handleAddToCart = (part: Part) => {
-    console.log('Adding to cart:', part);
+    addToCart({
+      id: part.id.toString(),
+      name: part.name,
+      price: part.price,
+      image_url: part.image_url,
+      brand: part.brand,
+      type: 'part',
+    });
+    // Optionally, navigate to cart or show a toast
     navigate('/cart');
   };
 
@@ -232,6 +191,27 @@ export default function PartsSearchPage() {
       // In a real app, this would open a comparison modal or navigate to a comparison page
     }
   };
+
+  if (loading) {
+    return (
+      <Layout currentPage="parts">
+        <div className="flex justify-center items-center h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-gray-600" />
+          <span className="ml-3 text-lg">Loading parts...</span>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout currentPage="parts">
+        <div className="flex justify-center items-center h-screen text-red-600 text-lg">
+          Error: {error}
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout currentPage="parts">
@@ -353,7 +333,7 @@ export default function PartsSearchPage() {
                   </Button>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-3">
                 <CustomSelect
                   options={sortOptions}
@@ -361,7 +341,7 @@ export default function PartsSearchPage() {
                   onValueChange={setSortBy}
                   className="w-40"
                 />
-                
+
                 <div className="flex border rounded-md">
                   <Button
                     variant={viewMode === 'grid' ? 'default' : 'ghost'}
@@ -382,8 +362,8 @@ export default function PartsSearchPage() {
             </div>
 
             {/* Parts Grid/List */}
-            <div className={viewMode === 'grid' 
-              ? 'grid grid-cols-1 md:grid-cols-2 gap-6' 
+            <div className={viewMode === 'grid'
+              ? 'grid grid-cols-1 md:grid-cols-2 gap-6'
               : 'space-y-4'
             }>
               {filteredParts.map(part => (
@@ -396,7 +376,7 @@ export default function PartsSearchPage() {
                         </CardTitle>
                         <CardDescription className="flex items-center gap-2">
                           <span>{part.brand}</span>
-                          {part.isOem && (
+                          {part.is_oem && (
                             <Badge variant="secondary" className="text-xs">
                               <Shield className="h-3 w-3 mr-1" />
                               OEM
@@ -404,24 +384,24 @@ export default function PartsSearchPage() {
                           )}
                         </CardDescription>
                       </div>
-                      
+
                       <div className="flex flex-col items-end gap-1">
-                        <div className={`px-2 py-1 rounded text-xs font-medium ${getBestValueColor(part.bestValueScore)}`}>
+                        <div className={`px-2 py-1 rounded text-xs font-medium ${getBestValueColor(part.best_value_score)}`}>
                           <Award className="h-3 w-3 inline mr-1" />
-                          {part.bestValueScore}/10
+                          {part.best_value_score}/10
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleCompare(part.id)}
-                          className={compareList.includes(part.id) ? 'text-blue-600' : ''}
+                          onClick={() => toggleCompare(part.id.toString())}
+                          className={compareList.includes(part.id.toString()) ? 'text-blue-600' : ''}
                         >
                           <GitCompare className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent>
                     <div className="flex items-center gap-2 mb-3">
                       <div className="flex items-center">
@@ -429,18 +409,18 @@ export default function PartsSearchPage() {
                         <span className="ml-1 text-sm font-medium">{part.rating}</span>
                       </div>
                       <span className="text-sm text-gray-500">({part.reviews} reviews)</span>
-                      {!part.inStock && (
+                      {!part.in_stock && (
                         <Badge variant="destructive" className="text-xs">Out of Stock</Badge>
                       )}
                     </div>
 
                     <div className="flex items-center gap-2 mb-3">
                       <span className="text-2xl font-bold text-green-600">${part.price}</span>
-                      {part.originalPrice && (
+                      {part.original_price && (
                         <>
-                          <span className="text-lg text-gray-500 line-through">${part.originalPrice}</span>
+                          <span className="text-lg text-gray-500 line-through">${part.original_price}</span>
                           <Badge variant="destructive" className="text-xs">
-                            {Math.round((1 - part.price / part.originalPrice) * 100)}% OFF
+                            {Math.round((1 - part.price / part.original_price) * 100)}% OFF
                           </Badge>
                         </>
                       )}
@@ -466,9 +446,9 @@ export default function PartsSearchPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button 
-                        className="flex-1" 
-                        disabled={!part.inStock}
+                      <Button
+                        className="flex-1"
+                        disabled={!part.in_stock}
                         onClick={() => handleAddToCart(part)}
                       >
                         <ShoppingCart className="h-4 w-4 mr-2" />
@@ -479,8 +459,8 @@ export default function PartsSearchPage() {
                       </Button>
                     </div>
 
-                    <Button 
-                      variant="link" 
+                    <Button
+                      variant="link"
                       className="w-full mt-2 text-sm"
                       onClick={() => handleGetInstallationQuote(part)}
                     >

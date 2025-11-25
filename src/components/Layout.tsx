@@ -3,10 +3,10 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  Search, 
-  ShoppingCart, 
-  User, 
+import {
+  Search,
+  ShoppingCart,
+  User,
   Menu,
   Car,
   Wrench,
@@ -23,6 +23,7 @@ import {
   Youtube,
   ExternalLink
 } from 'lucide-react';
+import { useCart } from '../context/CartContext'; // Import useCart
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -31,6 +32,8 @@ interface LayoutProps {
 
 export default function Layout({ children, currentPage }: LayoutProps) {
   const location = useLocation();
+  const { getCartTotalQuantity } = useCart(); // Use the cart hook
+  const cartQuantity = getCartTotalQuantity();
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -85,40 +88,40 @@ export default function Layout({ children, currentPage }: LayoutProps) {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className={`text-sm font-medium transition-colors hover:text-blue-600 ${
                   isActive('/') ? 'text-blue-600' : 'text-gray-700'
                 }`}
               >
                 Home
               </Link>
-              <Link 
-                to="/parts-search" 
+              <Link
+                to="/parts-search"
                 className={`text-sm font-medium transition-colors hover:text-blue-600 ${
                   isActive('/parts') ? 'text-blue-600' : 'text-gray-700'
                 }`}
               >
                 Parts Search
               </Link>
-              <Link 
-                to="/shops-map" 
+              <Link
+                to="/shops-map"
                 className={`text-sm font-medium transition-colors hover:text-blue-600 ${
                   isActive('/shops') ? 'text-blue-600' : 'text-gray-700'
                 }`}
               >
                 Find Shops
               </Link>
-              <Link 
-                to="/quote-bidding" 
+              <Link
+                to="/quote-bidding"
                 className={`text-sm font-medium transition-colors hover:text-blue-600 ${
                   isActive('/quote') ? 'text-blue-600' : 'text-gray-700'
                 }`}
               >
                 Get Quotes
               </Link>
-              <Link 
-                to="/my-garage" 
+              <Link
+                to="/my-garage"
                 className={`text-sm font-medium transition-colors hover:text-blue-600 ${
                   isActive('/my-garage') || isActive('/dashboard') ? 'text-blue-600' : 'text-gray-700'
                 }`}
@@ -135,9 +138,11 @@ export default function Layout({ children, currentPage }: LayoutProps) {
               <Link to="/cart">
                 <Button variant="ghost" size="sm" className="relative">
                   <ShoppingCart className="h-4 w-4" />
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
-                    3
-                  </Badge>
+                  {cartQuantity > 0 && (
+                    <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center text-xs">
+                      {cartQuantity}
+                    </Badge>
+                  )}
                 </Button>
               </Link>
               <Button variant="ghost" size="sm">
@@ -190,7 +195,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
               <h3 className="text-lg font-semibold">Support</h3>
               <ul className="space-y-2">
                 <li>
-                  <button 
+                  <button
                     onClick={() => handleSupportLink('help-center')}
                     className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer flex items-center gap-1"
                   >
@@ -199,7 +204,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => handleSupportLink('contact-us')}
                     className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer flex items-center gap-1"
                   >
@@ -208,7 +213,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => handleSupportLink('warranty-claims')}
                     className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer flex items-center gap-1"
                   >
@@ -217,7 +222,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => handleSupportLink('returns')}
                     className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer flex items-center gap-1"
                   >
@@ -233,7 +238,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
               <h3 className="text-lg font-semibold">Company</h3>
               <ul className="space-y-2">
                 <li>
-                  <button 
+                  <button
                     onClick={() => handleSupportLink('about-us')}
                     className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer"
                   >
@@ -241,7 +246,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => handleSupportLink('careers')}
                     className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer"
                   >
@@ -249,7 +254,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => handleSupportLink('privacy-policy')}
                     className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer"
                   >
@@ -257,7 +262,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => handleSupportLink('terms-of-service')}
                     className="text-gray-400 hover:text-white text-sm transition-colors cursor-pointer"
                   >
@@ -284,13 +289,13 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                   <span>123 Auto Street<br />Car City, CC 12345</span>
                 </div>
               </div>
-              
+
               {/* Newsletter Signup */}
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Stay Updated</h4>
                 <div className="flex space-x-2">
-                  <Input 
-                    placeholder="Enter your email" 
+                  <Input
+                    placeholder="Enter your email"
                     className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 text-sm"
                   />
                   <Button size="sm" className="bg-blue-600 hover:bg-blue-700">

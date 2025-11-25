@@ -11,6 +11,8 @@ import MyGarage from './pages/MyGarage';
 import NotFound from './pages/NotFound';
 import Register from './pages/Register'; // Import Register component
 import Login from './pages/Login'; // Import Login component
+import Checkout from './pages/Checkout'; // Import Checkout component
+import { CartProvider } from './context/CartContext'; // Import CartProvider
 
 const queryClient = new QueryClient();
 
@@ -19,21 +21,24 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/parts" element={<PartsSearch />} />
-          <Route path="/parts-search" element={<PartsSearch />} />
-          <Route path="/shops" element={<ShopsMap />} />
-          <Route path="/shops-map" element={<ShopsMap />} />
-          <Route path="/quotes" element={<QuoteBidding />} />
-          <Route path="/quote-bidding" element={<QuoteBidding />} />
-          <Route path="/dashboard" element={<MyGarage />} />
-          <Route path="/my-garage" element={<MyGarage />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/register" element={<Register />} /> {/* Add Register route */}
-          <Route path="/login" element={<Login />} /> {/* Add Login route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <CartProvider> {/* Wrap Routes with CartProvider */}
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/parts" element={<PartsSearch />} />
+            <Route path="/parts-search" element={<PartsSearch />} />
+            <Route path="/shops" element={<ShopsMap />} />
+            <Route path="/shops-map" element={<ShopsMap />} />
+            <Route path="/quotes" element={<QuoteBidding />} />
+            <Route path="/quote-bidding" element={<QuoteBidding />} />
+            <Route path="/dashboard" element={<MyGarage />} />
+            <Route path="/my-garage" element={<MyGarage />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/register" element={<Register />} /> {/* Add Register route */}
+            <Route path="/login" element={<Login />} /> {/* Add Login route */}
+            <Route path="/checkout" element={<Checkout />} /> {/* Add Checkout route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </CartProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Layout from '@/components/Layout';
-import { 
-  ShoppingCart, 
-  Trash2, 
-  Plus, 
-  Minus, 
+import {
+  ShoppingCart,
+  Trash2,
+  Plus,
+  Minus,
   CreditCard,
   Shield,
   Truck,
@@ -21,6 +21,8 @@ import {
   Gift,
   Percent
 } from 'lucide-react';
+import { useCart } from '../context/CartContext'; // Import useCart
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 interface CartItem {
   id: string;
@@ -39,62 +41,31 @@ interface CartItem {
   scheduledDate?: string;
 }
 
+interface CartItemDisplay extends Omit<CartItem, 'quantity'> {
+  quantity: number;
+  brand?: string;
+  originalPrice?: number;
+  seller?: string;
+  shopName?: string;
+  warranty?: string;
+  shipping?: string;
+  estimatedTime?: string;
+  scheduledDate?: string;
+}
+
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: '1',
-      type: 'part',
-      name: 'Premium Ceramic Brake Pads - Front Set',
-      brand: 'Brembo',
-      price: 89.99,
-      originalPrice: 129.99,
-      quantity: 1,
-      seller: 'AutoZone',
-      image: '/api/placeholder/100/100',
-      warranty: '3 years / 36,000 miles',
-      shipping: 'Free 2-day shipping'
-    },
-    {
-      id: '2',
-      type: 'labor',
-      name: 'Brake Pad Installation Service',
-      price: 120.00,
-      quantity: 1,
-      shopName: 'QuickFix Auto Service',
-      warranty: '2 years / 24,000 miles',
-      estimatedTime: '2 hours',
-      scheduledDate: '2024-01-15 at 2:30 PM'
-    },
-    {
-      id: '3',
-      type: 'part',
-      name: 'Engine Air Filter',
-      brand: 'K&N',
-      price: 34.99,
-      originalPrice: 49.99,
-      quantity: 1,
-      seller: 'Amazon',
-      image: '/api/placeholder/100/100',
-      warranty: '1 year',
-      shipping: 'Prime 1-day delivery'
-    }
-  ]);
+  const { cartItems, removeFromCart, updateCartItemQuantity, getCartTotalQuantity } = useCart(); // Use the cart hook
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number } | null>(null);
 
   const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(id);
-      return;
-    }
-    setCartItems(prev => prev.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    ));
+    updateCartItemQuantity(id, newQuantity);
   };
 
   const removeItem = (id: string) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
+    removeFromCart(id);
   };
 
   const applyPromoCode = () => {
@@ -103,7 +74,7 @@ export default function CartPage() {
       'FIRST20': 20,
       'WELCOME15': 15
     };
-    
+
     if (validCodes[promoCode as keyof typeof validCodes]) {
       setAppliedPromo({
         code: promoCode,
@@ -123,11 +94,11 @@ export default function CartPage() {
   const partsSubtotal = cartItems
     .filter(item => item.type === 'part')
     .reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
+
   const laborSubtotal = cartItems
     .filter(item => item.type === 'labor')
     .reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  
+
   const subtotal = partsSubtotal + laborSubtotal;
   const shipping = partsSubtotal > 75 ? 0 : 9.99; // Free shipping over $75
   const tax = subtotal * 0.08; // 8% tax
@@ -143,7 +114,7 @@ export default function CartPage() {
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Shopping Cart</h1>
-          <p className="text-gray-600">{cartItems.length} items in your cart</p>
+          <p className="text-gray-600">{getCartTotalQuantity()} items in your cart</p>
         </div>
 
         {cartItems.length === 0 ? (
@@ -178,11 +149,11 @@ export default function CartPage() {
                             <ShoppingCart className="h-8 w-8 text-gray-400" />
                           )}
                         </div>
-                        
+
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{item.name}</h3>
                           <p className="text-gray-600">{item.brand} • Sold by {item.seller}</p>
-                          
+
                           <div className="flex items-center gap-4 mt-2">
                             <div className="flex items-center gap-2">
                               <span className="text-xl font-bold text-green-600">${item.price}</span>
@@ -190,19 +161,19 @@ export default function CartPage() {
                                 <span className="text-gray-500 line-through">${item.originalPrice}</span>
                               )}
                             </div>
-                            
+
                             <div className="flex items-center text-sm text-gray-600">
                               <Shield className="h-4 w-4 mr-1" />
                               {item.warranty}
                             </div>
-                            
+
                             <div className="flex items-center text-sm text-gray-600">
                               <Truck className="h-4 w-4 mr-1" />
                               {item.shipping}
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
                           <div className="flex items-center border rounded-lg">
                             <Button
@@ -221,7 +192,7 @@ export default function CartPage() {
                               <Plus className="h-4 w-4" />
                             </Button>
                           </div>
-                          
+
                           <Button
                             variant="ghost"
                             size="sm"
@@ -252,11 +223,11 @@ export default function CartPage() {
                         <div className="w-20 h-20 bg-blue-100 rounded-lg flex items-center justify-center">
                           <Calendar className="h-8 w-8 text-blue-600" />
                         </div>
-                        
+
                         <div className="flex-1">
                           <h3 className="font-semibold text-lg">{item.name}</h3>
                           <p className="text-gray-600">by {item.shopName}</p>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2 text-sm">
                             <div className="flex items-center text-gray-600">
                               <Clock className="h-4 w-4 mr-1" />
@@ -272,13 +243,13 @@ export default function CartPage() {
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-3">
                           <div className="text-right">
                             <div className="text-xl font-bold text-green-600">${item.price}</div>
                             <div className="text-sm text-gray-600">Labor cost</div>
                           </div>
-                          
+
                           <Button
                             variant="ghost"
                             size="sm"
@@ -315,7 +286,7 @@ export default function CartPage() {
                       </div>
                       <Button size="sm" variant="outline">Add</Button>
                     </div>
-                    
+
                     <div className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium">Brake Fluid DOT 3</p>
@@ -354,7 +325,7 @@ export default function CartPage() {
                       <span>Tax</span>
                       <span>${tax.toFixed(2)}</span>
                     </div>
-                    
+
                     {appliedPromo && (
                       <div className="flex justify-between text-green-600">
                         <span>Promo ({appliedPromo.code})</span>
@@ -420,7 +391,7 @@ export default function CartPage() {
                   )}
 
                   {/* Checkout Button */}
-                  <Button className="w-full" size="lg">
+                  <Button className="w-full" size="lg" onClick={() => navigate('/checkout')}> {/* Add onClick handler */}
                     <CreditCard className="h-5 w-5 mr-2" />
                     Proceed to Checkout
                   </Button>
