@@ -96,7 +96,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                 Home
               </Link>
               <Link
-                to="/parts-search"
+                to="/parts"
                 className={`text-sm font-medium transition-colors hover:text-blue-600 ${
                   isActive('/parts') ? 'text-blue-600' : 'text-gray-700'
                 }`}

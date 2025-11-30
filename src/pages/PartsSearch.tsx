@@ -54,10 +54,29 @@ export default function PartsSearchPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const initialYear = searchParams.get('year') || '';
+  const initialMake = searchParams.get('make') || '';
+  const initialModel = searchParams.get('model') || '';
+  const initialQuery = searchParams.get('q') || '';
+
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [vehicleInfo] = useState({
+    year: initialYear,
+    make: initialMake,
+    model: initialModel
+  });
+
   useEffect(() => {
     const getParts = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const data = await fetchParts();
+        const data = await fetchParts({
+          year: initialYear,
+          make: initialMake,
+          model: initialModel,
+          q: initialQuery,
+        });
         setParts(data);
       } catch (err) {
         setError('Failed to fetch parts');
@@ -67,9 +86,8 @@ export default function PartsSearchPage() {
       }
     };
     getParts();
-  }, []);
+  }, [initialYear, initialMake, initialModel, initialQuery]);
 
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || 'brake pads');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -78,11 +96,6 @@ export default function PartsSearchPage() {
   const [sortBy, setSortBy] = useState('bestValue');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [compareList, setCompareList] = useState<string[]>([]);
-  const [vehicleInfo] = useState({
-    year: searchParams.get('year') || '2019',
-    make: searchParams.get('make') || 'Toyota',
-    model: searchParams.get('model') || 'Camry'
-  });
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(new Set(parts.map(part => part.category)));
@@ -311,6 +324,7 @@ export default function PartsSearchPage() {
                       checked={inStockOnly}
                       onCheckedChange={setInStockOnly}
                     />
+                    
                     <label htmlFor="instock" className="text-sm">In Stock Only</label>
                   </div>
                 </div>

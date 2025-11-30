@@ -35,8 +35,16 @@ export const createOrder = async (orderPayload: any): Promise<any> => {
   return makeApiRequest('post', '/checkout/orders', orderPayload);
 };
 
-export const fetchParts = async (): Promise<any> => {
-  return makeApiRequest('get', '/parts');
+export const fetchParts = async (params?: { year?: string; make?: string; model?: string; q?: string }): Promise<any> => {
+  const query = new URLSearchParams();
+  if (params?.year) query.append('year', params.year);
+  if (params?.make) query.append('make', params.make);
+  if (params?.model) query.append('model', params.model);
+  if (params?.q) query.append('q', params.q);
+
+  const queryString = query.toString();
+  const url = `/search/parts${queryString ? `?${queryString}` : ''}`;
+  return makeApiRequest('get', url);
 };
 
 export default apiClient;

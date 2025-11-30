@@ -158,7 +158,7 @@ export default function HomePage() {
       alert('Please select your vehicle details first');
       return;
     }
-    navigate(`/parts?year=${selectedYear}&make=${selectedMake}&model=${selectedModel}&search=${encodeURIComponent(searchQuery)}`);
+    navigate(`/parts?year=${selectedYear}&make=${selectedMake}&model=${selectedModel}&q=${encodeURIComponent(searchQuery)}`);
   };
 
   const handleAddToCart = (deal: Deal) => {
