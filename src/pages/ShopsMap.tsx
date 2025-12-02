@@ -7,7 +7,8 @@ import { CustomSelect } from '@/components/CustomSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Layout from '@/components/Layout';
-// import API_BASE_URL } from '../lib/apiClient';
+// import { API_BASE_URL } from '../lib/apiClient';
+import { API_BASE_URL }from '../lib/apiClient';
 import {
   MapPin,
   Search,
@@ -92,7 +93,8 @@ export default function ShopsMapPage() {
 
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/shops/nearby?lat=${userLat}&lng=${userLng}&radius=${radiusFilter}`);
+        const response = await fetch(`https://api.autowise.club/api/shops/nearby?lat=${userLat}&lng=${userLng}&radius=${radiusFilter}`);
+        // const response = await fetch(`${API_BASE_URL}/api/shops/nearby?lat=${userLat}&lng=${userLng}&radius=${radiusFilter}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
