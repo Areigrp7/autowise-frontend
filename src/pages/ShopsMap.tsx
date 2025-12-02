@@ -7,7 +7,7 @@ import { CustomSelect } from '@/components/CustomSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Layout from '@/components/Layout';
-import { API_BASE_URL } from '../lib/apiClient';
+// import API_BASE_URL } from '../lib/apiClient';
 import {
   MapPin,
   Search,
