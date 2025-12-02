@@ -1,6 +1,8 @@
 import { makeApiRequest } from './apiClient';
 
-const API_BASE_URL = 'http://localhost:5000/api/auth';
+// const API_BASE_URL = 'http://localhost:5000/api/auth';
+const API_BASE_URL = 'https://api.autowise.club/api/auth';
+
 
 export const registerUser = async (userData: any) => {
   try {

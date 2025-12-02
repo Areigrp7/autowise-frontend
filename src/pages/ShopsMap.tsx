@@ -7,12 +7,13 @@ import { CustomSelect } from '@/components/CustomSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Layout from '@/components/Layout';
-import { 
-  MapPin, 
-  Search, 
-  Star, 
-  Clock, 
-  Phone, 
+import { API_BASE_URL } from '../lib/apiClient';
+import {
+  MapPin,
+  Search,
+  Star,
+  Clock,
+  Phone,
   Navigation,
   Filter,
   Calendar,
@@ -91,7 +92,7 @@ export default function ShopsMapPage() {
 
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/shops/nearby?lat=${userLat}&lng=${userLng}&radius=${radiusFilter}`);
+        const response = await fetch(`${API_BASE_URL}/shops/nearby?lat=${userLat}&lng=${userLng}&radius=${radiusFilter}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -207,8 +208,8 @@ export default function ShopsMapPage() {
                 ) : (
                   <div className="space-y-4 h-full overflow-y-auto">
                     {shops.map(shop => (
-                      <Card 
-                        key={shop.id} 
+                      <Card
+                        key={shop.id}
                         className={`cursor-pointer transition-all hover:shadow-md ${
                           selectedShop?.id === shop.id ? 'ring-2 ring-blue-500' : ''
                         }`}
@@ -234,7 +235,7 @@ export default function ShopsMapPage() {
                               <p className="text-sm text-gray-600">{shop.stored_distance}</p>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 mb-2">
                             <Badge className={getPricingColor(shop.pricing)}>
                               {shop.pricing}
@@ -244,7 +245,7 @@ export default function ShopsMapPage() {
                               {shop.next_available}
                             </div>
                           </div>
-                          
+
                           <div className="flex flex-wrap gap-1">
                             {shop.specialties.slice(0, 3).map((specialty, i) => (
                               <Badge key={i} variant="outline" className="text-xs">
