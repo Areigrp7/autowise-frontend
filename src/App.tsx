@@ -13,8 +13,10 @@ import Register from './pages/Register'; // Import Register component
 import Login from './pages/Login'; // Import Login component
 import Checkout from './pages/Checkout'; // Import Checkout component
 import { CartProvider } from './context/CartContext'; // Import CartProvider
+import "leaflet/dist/leaflet.css";
 
 const queryClient = new QueryClient();
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
