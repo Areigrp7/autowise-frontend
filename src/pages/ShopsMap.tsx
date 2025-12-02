@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,13 +24,14 @@ import {
   CheckCircle,
   ExternalLink
 } from 'lucide-react';
+import NearbyShopsMap from '../components/NearbyShopsMap';
 
 interface Shop {
-  id: string;
+  id: number;
   name: string;
-  rating: number;
+  rating: string;
   reviews: number;
-  distance: string;
+  stored_distance: string;
   address: string;
   phone: string;
   website?: string;
@@ -40,12 +41,16 @@ interface Shop {
   hours: {
     [key: string]: string;
   };
-  nextAvailable: string;
+  next_available: string;
   pricing: 'Budget' | 'Moderate' | 'Premium';
   verified: boolean;
   images: string[];
   description: string;
-  coordinates: [number, number];
+  coordinates: {
+    x: number;
+    y: number;
+  };
+  distance_km: number;
 }
 
 export default function ShopsMapPage() {
@@ -54,92 +59,53 @@ export default function ShopsMapPage() {
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [radiusFilter, setRadiusFilter] = useState('10');
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLng, setUserLng] = useState<number | null>(null);
+  const [geolocationError, setGeolocationError] = useState<string | null>(null);
 
-  const shops: Shop[] = [
-    {
-      id: '1',
-      name: 'QuickFix Auto Service',
-      rating: 4.8,
-      reviews: 324,
-      distance: '1.2 mi',
-      address: '123 Main St, Downtown',
-      phone: '(555) 123-4567',
-      website: 'quickfixauto.com',
-      specialties: ['Brakes', 'Oil Change', 'Diagnostics'],
-      services: ['General Repair', 'Maintenance', 'Inspection', 'Tire Service'],
-      certifications: ['ASE Certified', 'AAA Approved', 'NAPA AutoCare'],
-      hours: {
-        'Monday': '8:00 AM - 6:00 PM',
-        'Tuesday': '8:00 AM - 6:00 PM',
-        'Wednesday': '8:00 AM - 6:00 PM',
-        'Thursday': '8:00 AM - 6:00 PM',
-        'Friday': '8:00 AM - 6:00 PM',
-        'Saturday': '9:00 AM - 4:00 PM',
-        'Sunday': 'Closed'
-      },
-      nextAvailable: 'Today 2:30 PM',
-      pricing: 'Moderate',
-      verified: true,
-      images: ['/api/placeholder/400/300', '/api/placeholder/400/300'],
-      description: 'Family-owned auto service center with over 20 years of experience. Specializing in brake service and general automotive repair.',
-      coordinates: [40.7128, -74.0060]
-    },
-    {
-      id: '2',
-      name: 'Premier Automotive',
-      rating: 4.9,
-      reviews: 567,
-      distance: '2.1 mi',
-      address: '456 Oak Avenue, Midtown',
-      phone: '(555) 987-6543',
-      website: 'premierauto.com',
-      specialties: ['Engine Repair', 'Transmission', 'AC Service'],
-      services: ['Engine Diagnostics', 'Transmission Repair', 'AC Repair', 'Electrical'],
-      certifications: ['ASE Master Technician', 'Bosch Authorized', 'BMW Specialist'],
-      hours: {
-        'Monday': '7:30 AM - 7:00 PM',
-        'Tuesday': '7:30 AM - 7:00 PM',
-        'Wednesday': '7:30 AM - 7:00 PM',
-        'Thursday': '7:30 AM - 7:00 PM',
-        'Friday': '7:30 AM - 7:00 PM',
-        'Saturday': '8:00 AM - 5:00 PM',
-        'Sunday': '10:00 AM - 3:00 PM'
-      },
-      nextAvailable: 'Tomorrow 9:00 AM',
-      pricing: 'Premium',
-      verified: true,
-      images: ['/api/placeholder/400/300', '/api/placeholder/400/300'],
-      description: 'Premium automotive service specializing in European vehicles and complex engine diagnostics.',
-      coordinates: [40.7589, -73.9851]
-    },
-    {
-      id: '3',
-      name: 'City Motors Garage',
-      rating: 4.6,
-      reviews: 189,
-      distance: '2.8 mi',
-      address: '789 Industrial Blvd, East Side',
-      phone: '(555) 456-7890',
-      specialties: ['Tires', 'Alignment', 'Suspension'],
-      services: ['Tire Installation', 'Wheel Alignment', 'Suspension Repair', 'Brake Service'],
-      certifications: ['ASE Certified', 'Michelin Dealer'],
-      hours: {
-        'Monday': '8:00 AM - 5:30 PM',
-        'Tuesday': '8:00 AM - 5:30 PM',
-        'Wednesday': '8:00 AM - 5:30 PM',
-        'Thursday': '8:00 AM - 5:30 PM',
-        'Friday': '8:00 AM - 5:30 PM',
-        'Saturday': '9:00 AM - 2:00 PM',
-        'Sunday': 'Closed'
-      },
-      nextAvailable: 'Today 4:00 PM',
-      pricing: 'Budget',
-      verified: false,
-      images: ['/api/placeholder/400/300'],
-      description: 'Honest and reliable service for all your tire and suspension needs. Competitive pricing and quick turnaround.',
-      coordinates: [40.6892, -74.0445]
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLat(position.coords.latitude);
+          setUserLng(position.coords.longitude);
+        },
+        (err) => {
+          console.error("Geolocation Error: ", err);
+          setGeolocationError(err.message);
+          setLoading(false); // Stop loading if geolocation fails
+        }
+      );
+    } else {
+      setGeolocationError("Geolocation is not supported by this browser.");
+      setLoading(false); // Stop loading if geolocation is not supported
     }
-  ];
+  }, []);
+
+  useEffect(() => {
+    const fetchShops = async () => {
+      if (userLat === null || userLng === null) return; // Only fetch if user location is available
+
+      try {
+        setLoading(true);
+        const response = await fetch(`http://localhost:5000/api/shops/nearby?lat=${userLat}&lng=${userLng}&radius=${radiusFilter}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data: Shop[] = await response.json();
+        setShops(data);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShops();
+  }, [userLat, userLng, radiusFilter]); // Rerun when userLat, userLng, or radiusFilter changes
 
   const services = [
     { value: '', label: 'All Services' },
@@ -169,6 +135,21 @@ export default function ShopsMapPage() {
       default: return 'text-gray-600 bg-gray-50';
     }
   };
+
+  if (loading) {
+    return <Layout currentPage="shopsmap"><div>Loading shops...</div></Layout>;
+  }
+
+  if (geolocationError) {
+    return <Layout currentPage="shopsmap"><div>Geolocation Error: {geolocationError}</div></Layout>;
+  }
+
+  if (error) {
+    return <Layout currentPage="shopsmap"><div>Error: {error}</div></Layout>;
+  }
+
+  // Default center if no shops are found or for initial load
+  const defaultCenter: [number, number] = userLat && userLng ? [userLat, userLng] : [24.8607, 67.0011];
 
   return (
     <Layout currentPage="shopsmap">
@@ -222,15 +203,7 @@ export default function ShopsMapPage() {
               </CardHeader>
               <CardContent className="h-[500px]">
                 {viewMode === 'map' ? (
-                  <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">Interactive map would be displayed here</p>
-                      <p className="text-sm text-gray-500 mt-2">
-                        Integration with Google Maps API or similar mapping service
-                      </p>
-                    </div>
-                  </div>
+                  <NearbyShopsMap shops={shops} selectedShop={selectedShop} setSelectedShop={setSelectedShop} />
                 ) : (
                   <div className="space-y-4 h-full overflow-y-auto">
                     {shops.map(shop => (
@@ -258,7 +231,7 @@ export default function ShopsMapPage() {
                                 <span className="font-medium">{shop.rating}</span>
                                 <span className="text-sm text-gray-500">({shop.reviews})</span>
                               </div>
-                              <p className="text-sm text-gray-600">{shop.distance}</p>
+                              <p className="text-sm text-gray-600">{shop.stored_distance}</p>
                             </div>
                           </div>
                           
@@ -268,7 +241,7 @@ export default function ShopsMapPage() {
                             </Badge>
                             <div className="flex items-center text-sm text-green-600">
                               <Clock className="h-4 w-4 mr-1" />
-                              {shop.nextAvailable}
+                              {shop.next_available}
                             </div>
                           </div>
                           
@@ -316,7 +289,7 @@ export default function ShopsMapPage() {
                       <span className="ml-1 text-lg font-medium">{selectedShop.rating}</span>
                     </div>
                     <span className="text-gray-600">({selectedShop.reviews} reviews)</span>
-                    <span className="text-gray-600">• {selectedShop.distance}</span>
+                    <span className="text-gray-600">• {selectedShop.stored_distance}</span>
                   </div>
 
                   {/* Description */}
@@ -393,7 +366,7 @@ export default function ShopsMapPage() {
                   <div className="bg-green-50 p-3 rounded-lg">
                     <div className="flex items-center gap-2 text-green-700">
                       <Clock className="h-4 w-4" />
-                      <span className="font-medium">Next Available: {selectedShop.nextAvailable}</span>
+                      <span className="font-medium">Next Available: {selectedShop.next_available}</span>
                     </div>
                   </div>
 
