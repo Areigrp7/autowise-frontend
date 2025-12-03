@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { CustomSelect } from '@/components/CustomSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 import Layout from '@/components/Layout';
 import { makeApiRequest } from '../lib/apiClient';
 import {
@@ -137,7 +138,31 @@ export default function ShopsMapPage() {
   };
 
   if (loading) {
-    return <Layout currentPage="shopsmap"><div>Loading shops...</div></Layout>;
+    return (
+      <Layout currentPage="shopsmap">
+        <div className="container mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card className="h-[600px]">
+                <CardHeader className="pb-3">
+                  <Skeleton className="h-6 w-1/2" />
+                </CardHeader>
+                <CardContent className="h-[500px]">
+                  <Skeleton className="h-full w-full" />
+                </CardContent>
+              </Card>
+            </div>
+            <div className="lg:col-span-1">
+              <Card>
+                <CardContent className="flex items-center justify-center h-64">
+                  <Skeleton className="h-32 w-32 rounded-full" />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
   }
 
   if (geolocationError) {
