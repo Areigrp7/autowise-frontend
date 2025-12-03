@@ -59,8 +59,8 @@ export default function ShopsMapPage() {
   const [searchLocation, setSearchLocation] = useState('');
   const [selectedService, setSelectedService] = useState('');
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
-  const [radiusFilter, setRadiusFilter] = useState('20');
+  const [viewMode, setViewMode] = useState<'map' | 'lsist'>('map');
+  const [radiusFilter, setRadiusFilter] = useState('10');
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
