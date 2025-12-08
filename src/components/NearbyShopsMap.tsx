@@ -40,9 +40,10 @@ interface NearbyShopsMapProps {
   shops: Shop[];
   selectedShop: Shop | null;
   setSelectedShop: (shop: Shop | null) => void;
+  mapCenter: [number, number];
 }
 
-const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, setSelectedShop }) => {
+const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, setSelectedShop, mapCenter }) => {
   // const [shops, setShops] = useState<Shop[]>([]); // This is now passed as a prop
   // const [loading, setLoading] = useState<boolean>(true);
   // const [error, setError] = useState<string | null>(null);
@@ -75,10 +76,10 @@ const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, se
   // }
 
   // Default center if no shops are found or for initial load
-  const defaultCenter: [number, number] = [24.8607, 67.0011];
-  const mapCenter: [number, number] = shops.length > 0
-    ? [shops[0].coordinates.y, shops[0].coordinates.x]
-    : defaultCenter;
+  // const defaultCenter: [number, number] = [24.8607, 67.0011];
+  // const mapCenter: [number, number] = shops.length > 0
+  //   ? [shops[0].coordinates.y, shops[0].coordinates.x]
+  //   : defaultCenter;
 
   return (
     <MapContainer center={mapCenter} zoom={13} style={{ height: '500px', width: '100%' }}>

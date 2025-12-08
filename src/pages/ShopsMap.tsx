@@ -59,7 +59,7 @@ export default function ShopsMapPage() {
   const [searchLocation, setSearchLocation] = useState('');
   const [selectedService, setSelectedService] = useState('');
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
-  const [viewMode, setViewMode] = useState<'map' | 'lsist'>('map');
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [radiusFilter, setRadiusFilter] = useState('10');
   const [shops, setShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -67,6 +67,29 @@ export default function ShopsMapPage() {
   const [userLat, setUserLat] = useState<number | null>(null);
   const [userLng, setUserLng] = useState<number | null>(null);
   const [geolocationError, setGeolocationError] = useState<string | null>(null);
+  const [searchedLat, setSearchedLat] = useState<number | null>(null);
+  const [searchedLng, setSearchedLng] = useState<number | null>(null);
+
+  // Force linter re-evaluation
+
+  // Geocoding function
+  const geocodeLocation = async (location: string): Promise<[number, number] | null> => {
+    const GEOCODIO_API_KEY = '49e3655ab3a36bbd9ee596beb9b4336a6f94396'; // TODO: Replace with your actual Geocodio API key
+    try {
+      const response = await fetch(`https://api.geocod.io/v1.7/geocode?q=${encodeURIComponent(location)}&api_key=${GEOCODIO_API_KEY}`);
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        const { lat, lng } = data.results[0].location;
+        return [lat, lng];
+      } else {
+        console.error("Geocoding Error: Location not found");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error during geocoding:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -89,13 +112,16 @@ export default function ShopsMapPage() {
 
   useEffect(() => {
     const fetchShops = async () => {
-      if (userLat === null || userLng === null) return; // Only fetch if user location is available
+      const lat = searchedLat !== null ? searchedLat : userLat;
+      const lng = searchedLng !== null ? searchedLng : userLng;
+
+      if (lat === null || lng === null) return; // Only fetch if a location is available
 
       try {
         setLoading(true);
         const data: Shop[] = await makeApiRequest(
           'get',
-          `/shops/nearby?lat=${userLat}&lng=${userLng}&radius=${radiusFilter}`
+          `/shops/nearby?lat=${lat}&lng=${lng}&radius=${radiusFilter}`
         );
         setShops(data);
       } catch (err: any) {
@@ -106,7 +132,7 @@ export default function ShopsMapPage() {
     };
 
     fetchShops();
-  }, [userLat, userLng, radiusFilter]); // Rerun when userLat, userLng, or radiusFilter changes
+  }, [userLat, userLng, searchedLat, searchedLng, radiusFilter]); // Rerun when userLat, userLng, searchedLat, searchedLng, or radiusFilter changes
 
   const services = [
     { value: '', label: 'All Services' },
@@ -127,6 +153,28 @@ export default function ShopsMapPage() {
     { value: '25', label: '25 miles' },
     { value: '50', label: '50 miles' }
   ];
+
+  const handleSearch = async () => {
+    if (searchLocation) {
+      setLoading(true);
+      const coords = await geocodeLocation(searchLocation);
+      if (coords) {
+        setSearchedLat(coords[0]);
+        setSearchedLng(coords[1]);
+        // The useEffect for fetchShops will pick up these changes
+      } else {
+        setError("Could not find location. Please try a different zip code or state.");
+        setSearchedLat(null);
+        setSearchedLng(null);
+        setLoading(false); // Only set loading to false if geocoding fails
+      }
+    } else if (userLat !== null && userLng !== null) {
+      // If search location is cleared, revert to user's geolocation
+      setSearchedLat(null);
+      setSearchedLng(null);
+      // The useEffect for fetchShops will pick up these changes
+    }
+  };
 
   const getPricingColor = (pricing: string) => {
     switch (pricing) {
@@ -175,6 +223,8 @@ export default function ShopsMapPage() {
 
   // Default center if no shops are found or for initial load
   const defaultCenter: [number, number] = userLat && userLng ? [userLat, userLng] : [24.8607, 67.0011];
+  const mapCenter: [number, number] = searchedLat && searchedLng ? [searchedLat, searchedLng] :
+                                      userLat && userLng ? [userLat, userLng] : defaultCenter;
 
   return (
     <Layout currentPage="shopsmap">
@@ -204,7 +254,7 @@ export default function ShopsMapPage() {
               onValueChange={setRadiusFilter}
               className="w-32"
             />
-            <Button>
+            <Button onClick={handleSearch}>
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
@@ -228,7 +278,13 @@ export default function ShopsMapPage() {
               </CardHeader>
               <CardContent className="h-[500px]">
                 {viewMode === 'map' ? (
-                  <NearbyShopsMap shops={shops} selectedShop={selectedShop} setSelectedShop={setSelectedShop} />
+                  <NearbyShopsMap
+                    shops={shops}
+                    selectedShop={selectedShop}
+                    setSelectedShop={setSelectedShop}
+                    mapCenter={mapCenter}
+                    key={`${mapCenter[0]}-${mapCenter[1]}`}
+                  />
                 ) : (
                   <div className="space-y-4 h-full overflow-y-auto">
                     {shops.map(shop => (
