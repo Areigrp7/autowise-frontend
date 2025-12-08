@@ -119,11 +119,19 @@ export default function ShopsMapPage() {
 
       try {
         setLoading(true);
-        const data: Shop[] = await makeApiRequest(
+        const data: Shop | Shop[] = await makeApiRequest(
           'get',
           `/shops/nearby?lat=${lat}&lng=${lng}&radius=${radiusFilter}`
         );
-        setShops(data);
+        console.log("API response data:", data);
+        // Ensure shops is always an array
+        if (Array.isArray(data)) {
+          setShops(data);
+        } else if (data) {
+          setShops([data]);
+        } else {
+          setShops([]);
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -157,6 +165,7 @@ export default function ShopsMapPage() {
   const handleSearch = async () => {
     if (searchLocation) {
       setLoading(true);
+      console.log("Searching for location:", searchLocation); // Added console log
       const coords = await geocodeLocation(searchLocation);
       if (coords) {
         setSearchedLat(coords[0]);
