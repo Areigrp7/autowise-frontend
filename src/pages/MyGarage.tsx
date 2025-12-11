@@ -7,11 +7,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Layout from '@/components/Layout';
-import { 
-  Car, 
-  Plus, 
-  Calendar, 
-  Wrench, 
+import { AddVehicleForm } from '@/components/AddVehicleForm';
+import { AddMaintenanceRecordForm } from '@/components/AddMaintenanceRecordForm';
+import { AddReminderForm } from '@/components/AddReminderForm';
+import {
+  Car,
+  Plus,
+  Calendar,
+  Wrench,
   AlertTriangle,
   CheckCircle,
   Clock,
@@ -70,6 +73,10 @@ interface Reminder {
 
 export default function MyGaragePage() {
   const [activeTab, setActiveTab] = useState('vehicles');
+  const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
+  const [showAddRecordModal, setShowAddRecordModal] = useState(false);
+  const [showAddReminderModal, setShowAddReminderModal] = useState(false);
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([
     {
       id: '1',
@@ -96,7 +103,7 @@ export default function MyGaragePage() {
     }
   ]);
 
-  const [maintenanceRecords] = useState<MaintenanceRecord[]>([
+  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([
     {
       id: '1',
       vehicleId: '1',
@@ -135,7 +142,7 @@ export default function MyGaragePage() {
     }
   ]);
 
-  const [reminders] = useState<Reminder[]>([
+  const [reminders, setReminders] = useState<Reminder[]>([
     {
       id: '1',
       vehicleId: '1',
@@ -167,6 +174,18 @@ export default function MyGaragePage() {
     }
   ]);
 
+  const handleAddVehicle = (newVehicle: Vehicle) => {
+    setVehicles((prevVehicles) => [...prevVehicles, newVehicle]);
+  };
+
+  const handleAddMaintenanceRecord = (newRecord: MaintenanceRecord) => {
+    setMaintenanceRecords((prevRecords) => [...prevRecords, newRecord]);
+  };
+
+  const handleAddReminder = (newReminder: Reminder) => {
+    setReminders((prevReminders) => [...prevReminders, newReminder]);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'text-green-600 bg-green-50';
@@ -188,6 +207,7 @@ export default function MyGaragePage() {
   };
 
   return (
+    <>
     <Layout currentPage="dashboard">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
@@ -209,7 +229,7 @@ export default function MyGaragePage() {
           <TabsContent value="vehicles" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">My Vehicles</h2>
-              <Button>
+              <Button onClick={() => setShowAddVehicleModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Vehicle
               </Button>
@@ -219,13 +239,13 @@ export default function MyGaragePage() {
               {vehicles.map(vehicle => (
                 <Card key={vehicle.id} className="overflow-hidden">
                   <div className="aspect-video bg-gray-100 relative">
-                    {vehicle.image ? (
+                    {/* {vehicle.image ? (
                       <img src={vehicle.image} alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`} className="w-full h-full object-cover" />
-                    ) : (
+                    ) : ( */}
                       <div className="w-full h-full flex items-center justify-center">
                         <Car className="h-16 w-16 text-gray-400" />
                       </div>
-                    )}
+                    {/* // )} */}
                     <div className="absolute top-2 right-2 flex gap-2">
                       <Button variant="ghost" size="sm" className="bg-white/80 hover:bg-white">
                         <Edit className="h-4 w-4" />
@@ -286,7 +306,7 @@ export default function MyGaragePage() {
           <TabsContent value="maintenance" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Maintenance Records</h2>
-              <Button>
+              <Button onClick={() => setShowAddRecordModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Record
               </Button>
@@ -355,7 +375,7 @@ export default function MyGaragePage() {
           <TabsContent value="reminders" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Service Reminders</h2>
-              <Button>
+              <Button onClick={() => setShowAddReminderModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Reminder
               </Button>
@@ -441,5 +461,10 @@ export default function MyGaragePage() {
         </Tabs>
       </div>
     </Layout>
+    <AddVehicleForm open={showAddVehicleModal} onOpenChange={setShowAddVehicleModal} onAddVehicle={handleAddVehicle} />
+    <AddMaintenanceRecordForm open={showAddRecordModal} onOpenChange={setShowAddRecordModal} onAddMaintenanceRecord={handleAddMaintenanceRecord} vehicles={vehicles} />
+    <AddReminderForm open={showAddReminderModal} onOpenChange={setShowAddReminderModal} onAddReminder={handleAddReminder} vehicles={vehicles} />
+    </>
+    
   );
 }

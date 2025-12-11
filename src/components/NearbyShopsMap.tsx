@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -42,14 +42,53 @@ interface Shop {
   distance_km: number;
 }
 
+import "leaflet-routing-machine";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+
 interface NearbyShopsMapProps {
   shops: Shop[];
   selectedShop: Shop | null;
   setSelectedShop: (shop: Shop | null) => void;
   mapCenter: [number, number];
+  userLat: number | null;
+  userLng: number | null;
 }
 
-const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, setSelectedShop, mapCenter }) => {
+const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, setSelectedShop, mapCenter, userLat, userLng }) => {
+
+  const RoutingMachine = () => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (!map) return;
+
+      if (userLat && userLng && selectedShop) {
+        const routingControl = L.Routing.control({
+          waypoints: [
+            L.latLng(userLat, userLng),
+            L.latLng(selectedShop.coordinates.y, selectedShop.coordinates.x)
+          ],
+          routeWhileDragging: true,
+          showAlternatives: false,
+          fitSelectedRoutes: true,
+          lineOptions: {
+            styles: [{ color: '#6FA1EC', weight: 4 }]
+          },
+          altLineOptions: {
+            styles: [{ color: '#8898b6', weight: 4 }]
+          },
+          createMarker: function() { return null; } // Hide default markers
+        }).addTo(map);
+
+        return () => {
+          map.removeControl(routingControl);
+        };
+      }
+    }, [map, userLat, userLng, selectedShop]);
+
+    return null;
+  };
+
   // const [shops, setShops] = useState<Shop[]>([]); // This is now passed as a prop
   // const [loading, setLoading] = useState<boolean>(true);
   // const [error, setError] = useState<string | null>(null);
@@ -117,6 +156,7 @@ const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, se
           </Popup>
         </Marker>
       ))}
+      <RoutingMachine />
     </MapContainer>
   );
 };

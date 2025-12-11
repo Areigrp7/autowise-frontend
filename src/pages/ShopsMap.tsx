@@ -400,13 +400,15 @@ export default function ShopsMapPage() {
               </CardHeader>
               <CardContent className="h-[500px]">
                 {viewMode === 'map' ? (
-                  <NearbyShopsMap
-                    shops={shops}
-                    selectedShop={selectedShop}
-                    setSelectedShop={setSelectedShop}
-                    mapCenter={mapCenter}
-                    key={`${mapCenter[0]}-${mapCenter[1]}`}
-                  />
+                    <NearbyShopsMap
+                      shops={shops}
+                      selectedShop={selectedShop}
+                      setSelectedShop={setSelectedShop}
+                      mapCenter={mapCenter}
+                      userLat={userLat}
+                      userLng={userLng}
+                      key={`${mapCenter[0]}-${mapCenter[1]}`}
+                    />
                 ) : viewMode === 'list' ? (
                   <div className="space-y-4 h-full overflow-y-auto">
                     {shops.map(shop => (
@@ -641,11 +643,19 @@ export default function ShopsMapPage() {
                       Book Appointment
                     </Button>
                     <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={() => {
+                        if (selectedShop?.phone) {
+                          window.location.href = `tel:${selectedShop.phone}`;
+                        }
+                      }}>
                         <Phone className="h-4 w-4 mr-2" />
                         Call
                       </Button>
-                      <Button variant="outline">
+                      <Button variant="outline" onClick={() => {
+                        if (selectedShop) {
+                          setSelectedShop(selectedShop); // This will trigger the routing in NearbyShopsMap
+                        }
+                      }}>
                         <Navigation className="h-4 w-4 mr-2" />
                         Directions
                       </Button>
