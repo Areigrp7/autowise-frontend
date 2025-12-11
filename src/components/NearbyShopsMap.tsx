@@ -17,7 +17,13 @@ interface Shop {
   rating: string;
   reviews: number;
   stored_distance: string;
-  address: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   phone: string;
   website?: string;
   specialties: string[];
@@ -102,7 +108,7 @@ const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, se
               <h3>{shop.name}</h3>
               <p>Rating: {shop.rating} ({shop.reviews} reviews)</p>
               <p>Distance: {shop.stored_distance}</p>
-              <p>Address: {shop.address}</p>
+              <p>Address: {shop.address.street}, {shop.address.city}, {shop.address.state} {shop.address.zipCode}</p>
               <p>Phone: {shop.phone}</p>
               <p>Specialties: {shop.specialties.join(', ')}</p>
               {shop.next_available && <p>Next Available: {shop.next_available}</p>}

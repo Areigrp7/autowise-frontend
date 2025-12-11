@@ -394,6 +394,88 @@ Query Parameters:
 }
 ```
 
+### Add New Shop
+```http
+POST /shops
+Authorization: Bearer <jwt_token>
+
+Request Body:
+```json
+{
+  "name": "New Auto Shop",
+  "address": {
+    "street": "456 Oak Ave",
+    "city": "Springfield",
+    "state": "IL",
+    "zipCode": "62704",
+    "country": "USA"
+  },
+  "coordinates": {
+    "latitude": 39.7905,
+    "longitude": -89.6545
+  },
+  "phone": "(555) 987-6543",
+  "email": "contact@newautoshop.com",
+  "website": "https://newautoshop.com",
+  "services": ["Oil Change", "Tire Rotation"],
+  "specialties": ["European Cars"],
+  "certifications": ["ASE Certified"],
+  "hours": {
+    "monday": "9:00 AM - 5:00 PM",
+    "tuesday": "9:00 AM - 5:00 PM",
+    "wednesday": "9:00 AM - 5:00 PM",
+    "thursday": "9:00 AM - 5:00 PM",
+    "friday": "9:00 AM - 5:00 PM",
+    "saturday": "Closed",
+    "sunday": "Closed"
+  },
+  "description": "A brand new auto shop offering quality services."
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "shop_456",
+    "name": "New Auto Shop",
+    // ... other shop details ...
+    "rating": 0,
+    "reviewCount": 0,
+    "verified": false,
+    "distance": 0,
+    "distanceUnit": "miles"
+  }
+}
+```
+
+### Edit Shop
+```http
+PUT /shops/:shopId
+Authorization: Bearer <jwt_token>
+
+Request Body:
+```json
+{
+  "name": "Updated Auto Shop Name",
+  "phone": "(555) 111-2222"
+  // ... other fields to update ...
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "shop_456",
+    "name": "Updated Auto Shop Name",
+    // ... updated shop details ...
+  }
+}
+```
+
 ### Get Shop Details
 ```http
 GET /shops/:shopId
