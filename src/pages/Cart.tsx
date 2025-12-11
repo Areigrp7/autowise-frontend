@@ -54,7 +54,7 @@ interface CartItemDisplay extends Omit<CartItem, 'quantity'> {
 }
 
 export default function CartPage() {
-  const { cartItems, removeFromCart, updateCartItemQuantity, getCartTotalQuantity } = useCart(); // Use the cart hook
+  const { cartItems, removeFromCart, updateCartItemQuantity, getCartTotalQuantity, addToCart } = useCart(); // Use the cart hook
   const navigate = useNavigate(); // Initialize useNavigate
 
   const [promoCode, setPromoCode] = useState('');
@@ -108,6 +108,31 @@ export default function CartPage() {
   const partsSavings = cartItems
     .filter(item => item.type === 'part' && item.originalPrice)
     .reduce((sum, item) => sum + ((item.originalPrice! - item.price) * item.quantity), 0);
+
+  const recommendedAddons = [
+    {
+      id: "brake-cleaner-spray",
+      type: "part",
+      name: "Brake Cleaner Spray",
+      brand: "CRC Brakleen",
+      price: 8.99,
+      quantity: 1,
+      image_url: "/placeholder-brake-cleaner.jpg", // Placeholder image URL
+      seller: "Autowise Parts",
+      warranty: "1 Year"
+    },
+    {
+      id: "brake-fluid-dot3",
+      type: "part",
+      name: "Brake Fluid DOT 3",
+      brand: "Valvoline MaxLife",
+      price: 12.99,
+      quantity: 1,
+      image_url: "/placeholder-brake-fluid.jpg", // Placeholder image URL
+      seller: "Autowise Parts",
+      warranty: "2 Years"
+    }
+  ];
 
   return (
     <Layout currentPage="cart">
@@ -278,23 +303,18 @@ export default function CartPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Brake Cleaner Spray</p>
-                        <p className="text-sm text-gray-600">CRC Brakleen</p>
-                        <p className="text-green-600 font-semibold">$8.99</p>
+                    {recommendedAddons.map(addon => (
+                      <div key={addon.id} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <p className="font-medium">{addon.name}</p>
+                          <p className="text-sm text-gray-600">{addon.brand}</p>
+                          <p className="text-green-600 font-semibold">${addon.price.toFixed(2)}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => addToCart(addon)}>
+                          Add
+                        </Button>
                       </div>
-                      <Button size="sm" variant="outline">Add</Button>
-                    </div>
-
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Brake Fluid DOT 3</p>
-                        <p className="text-sm text-gray-600">Valvoline MaxLife</p>
-                        <p className="text-green-600 font-semibold">$12.99</p>
-                      </div>
-                      <Button size="sm" variant="outline">Add</Button>
-                    </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
