@@ -27,11 +27,12 @@ export function AddVehicleForm({ open, onOpenChange, onAddVehicle }: AddVehicleF
   const [mileage, setMileage] = useState('');
   const [color, setColor] = useState('');
   const [nickname, setNickname] = useState('');
+  const [image_url, setImageUrl] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const newVehicle = {
-      id: String(Math.random()), // Simple unique ID for now
+      // id: String(Math.random()), // The backend will generate the ID
       year: parseInt(year),
       make,
       model,
@@ -40,6 +41,7 @@ export function AddVehicleForm({ open, onOpenChange, onAddVehicle }: AddVehicleF
       mileage: parseInt(mileage),
       color,
       nickname,
+      image_url,
     };
     onAddVehicle && onAddVehicle(newVehicle);
     onOpenChange(false); // Close the modal
@@ -52,6 +54,7 @@ export function AddVehicleForm({ open, onOpenChange, onAddVehicle }: AddVehicleF
     setMileage('');
     setColor('');
     setNickname('');
+    setImageUrl('');
   };
 
   return (
@@ -157,6 +160,18 @@ export function AddVehicleForm({ open, onOpenChange, onAddVehicle }: AddVehicleF
               id="nickname"
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="image_url" className="text-right">
+              Image URL
+            </Label>
+            <Input
+              id="image_url"
+              type="url"
+              value={image_url}
+              onChange={(e) => setImageUrl(e.target.value)}
               className="col-span-3"
             />
           </div>

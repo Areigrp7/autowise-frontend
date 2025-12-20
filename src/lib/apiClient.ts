@@ -49,4 +49,12 @@ export const fetchParts = async (params?: { year?: string; make?: string; model?
   return makeApiRequest('get', url);
 };
 
+export const getVehicles = async (): Promise<any> => {
+  return makeApiRequest('get', '/vehicles');
+};
+
+export const addVehicle = async (vehiclePayload: any): Promise<any> => {
+  return makeApiRequest('post', '/vehicles', vehiclePayload);
+};
+
 export default apiClient;

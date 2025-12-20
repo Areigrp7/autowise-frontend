@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Layout from '@/components/Layout';
 import { AddVehicleForm } from '@/components/AddVehicleForm';
+import { addVehicle, getVehicles } from '@/lib/apiClient';
 import { AddMaintenanceRecordForm } from '@/components/AddMaintenanceRecordForm';
 import { AddReminderForm } from '@/components/AddReminderForm';
 import {
@@ -77,31 +78,7 @@ export default function MyGaragePage() {
   const [showAddRecordModal, setShowAddRecordModal] = useState(false);
   const [showAddReminderModal, setShowAddReminderModal] = useState(false);
 
-  const [vehicles, setVehicles] = useState<Vehicle[]>([
-    {
-      id: '1',
-      year: 2019,
-      make: 'Toyota',
-      model: 'Camry',
-      trim: 'LE',
-      vin: '4T1B11HK1KU123456',
-      mileage: 45230,
-      color: 'Silver',
-      nickname: 'Daily Driver',
-      image: '/api/placeholder/300/200'
-    },
-    {
-      id: '2',
-      year: 2016,
-      make: 'Honda',
-      model: 'Civic',
-      trim: 'EX',
-      vin: '2HGFC2F59GH123456',
-      mileage: 78450,
-      color: 'Blue',
-      nickname: 'Weekend Car'
-    }
-  ]);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([
     {
@@ -174,8 +151,27 @@ export default function MyGaragePage() {
     }
   ]);
 
-  const handleAddVehicle = (newVehicle: Vehicle) => {
-    setVehicles((prevVehicles) => [...prevVehicles, newVehicle]);
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const data = await getVehicles();
+        setVehicles(data);
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+      }
+    };
+
+    fetchVehicles();
+  }, []);
+
+  const handleAddVehicle = async (newVehicle: Vehicle) => {
+    try {
+      const addedVehicle = await addVehicle(newVehicle);
+      setVehicles((prevVehicles) => [...prevVehicles, addedVehicle]);
+    } catch (error) {
+      console.error('Error adding vehicle:', error);
+      // Optionally, show an error message to the user
+    }
   };
 
   const handleAddMaintenanceRecord = (newRecord: MaintenanceRecord) => {
