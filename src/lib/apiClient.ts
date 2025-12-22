@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 // const API_BASE_URL = 'https://44.220.191.221/api';
-const API_BASE_URL = 'https://api.autowise.club/api';
+// const API_BASE_URL = 'https://api.autowise.club/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -57,4 +57,11 @@ export const addVehicle = async (vehiclePayload: any): Promise<any> => {
   return makeApiRequest('post', '/vehicles', vehiclePayload);
 };
 
+export const updateVehicle = async (vehicleId: string, vehiclePayload: any): Promise<any> => {
+  return makeApiRequest('put', `/vehicles/${vehicleId}`, vehiclePayload);
+};
+
+export const deleteVehicle = async (vehicleId: string): Promise<any> => {
+  return makeApiRequest('delete', `/vehicles/${vehicleId}`);
+};
 export default apiClient;
