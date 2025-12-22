@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Layout from '@/components/Layout';
 import { AddVehicleForm } from '@/components/AddVehicleForm';
-import { addVehicle, getVehicles } from '@/lib/apiClient';
+import { addVehicle, getVehicles, updateVehicle, deleteVehicle } from '@/lib/apiClient';
 import { AddMaintenanceRecordForm } from '@/components/AddMaintenanceRecordForm';
 import { AddReminderForm } from '@/components/AddReminderForm';
 import {
@@ -77,6 +77,8 @@ export default function MyGaragePage() {
   const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
   const [showAddRecordModal, setShowAddRecordModal] = useState(false);
   const [showAddReminderModal, setShowAddReminderModal] = useState(false);
+  const [showEditVehicleModal, setShowEditVehicleModal] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
@@ -182,6 +184,34 @@ export default function MyGaragePage() {
     setReminders((prevReminders) => [...prevReminders, newReminder]);
   };
 
+  const handleEditVehicle = (vehicle: Vehicle) => {
+    setEditingVehicle(vehicle);
+    setShowAddVehicleModal(true);
+  };
+
+  const handleUpdateVehicle = async (updatedVehicle: Vehicle) => {
+    try {
+      const result = await updateVehicle(updatedVehicle.id, updatedVehicle);
+      setVehicles((prevVehicles) =>
+        prevVehicles.map((v) => (v.id === updatedVehicle.id ? result : v))
+      );
+      setEditingVehicle(null);
+    } catch (error) {
+      console.error('Error updating vehicle:', error);
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicleId: string) => {
+    if (window.confirm('Are you sure you want to delete this vehicle?')) {
+      try {
+        await deleteVehicle(vehicleId);
+        setVehicles((prevVehicles) => prevVehicles.filter((v) => v.id !== vehicleId));
+      } catch (error) {
+        console.error('Error deleting vehicle:', error);
+      }
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return 'text-green-600 bg-green-50';
@@ -243,10 +273,10 @@ export default function MyGaragePage() {
                       </div>
                     {/* // )} */}
                     <div className="absolute top-2 right-2 flex gap-2">
-                      <Button variant="ghost" size="sm" className="bg-white/80 hover:bg-white">
+                      <Button variant="ghost" size="sm" className="bg-white/80 hover:bg-white" onClick={() => handleEditVehicle(vehicle)}>
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" className="bg-white/80 hover:bg-white text-red-600">
+                      <Button variant="ghost" size="sm" className="bg-white/80 hover:bg-white text-red-600" onClick={() => handleDeleteVehicle(vehicle.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -457,7 +487,7 @@ export default function MyGaragePage() {
         </Tabs>
       </div>
     </Layout>
-    <AddVehicleForm open={showAddVehicleModal} onOpenChange={setShowAddVehicleModal} onAddVehicle={handleAddVehicle} />
+    <AddVehicleForm open={showAddVehicleModal} onOpenChange={setShowAddVehicleModal} onAddVehicle={handleAddVehicle} editingVehicle={editingVehicle} onSaveVehicle={editingVehicle ? handleUpdateVehicle : handleAddVehicle} />
     <AddMaintenanceRecordForm open={showAddRecordModal} onOpenChange={setShowAddRecordModal} onAddMaintenanceRecord={handleAddMaintenanceRecord} vehicles={vehicles} />
     <AddReminderForm open={showAddReminderModal} onOpenChange={setShowAddReminderModal} onAddReminder={handleAddReminder} vehicles={vehicles} />
     </>

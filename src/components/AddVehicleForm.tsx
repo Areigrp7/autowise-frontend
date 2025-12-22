@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -16,9 +16,24 @@ interface AddVehicleFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddVehicle?: (vehicle: any) => void; // eslint-disable-line @typescript-eslint/no-explicit-any
+  editingVehicle?: Vehicle | null;
+  onSaveVehicle: (vehicle: Vehicle) => void;
 }
 
-export function AddVehicleForm({ open, onOpenChange, onAddVehicle }: AddVehicleFormProps) {
+interface Vehicle {
+  id?: string;
+  year: number;
+  make: string;
+  model: string;
+  trim?: string;
+  vin: string;
+  mileage: number;
+  color: string;
+  nickname?: string;
+  image_url?: string;
+}
+
+export function AddVehicleForm({ open, onOpenChange, editingVehicle, onSaveVehicle }: AddVehicleFormProps) {
   const [year, setYear] = useState('');
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
@@ -29,10 +44,34 @@ export function AddVehicleForm({ open, onOpenChange, onAddVehicle }: AddVehicleF
   const [nickname, setNickname] = useState('');
   const [image_url, setImageUrl] = useState('');
 
+  useEffect(() => {
+    if (editingVehicle) {
+      setYear(String(editingVehicle.year));
+      setMake(editingVehicle.make);
+      setModel(editingVehicle.model);
+      setTrim(editingVehicle.trim || '');
+      setVin(editingVehicle.vin);
+      setMileage(String(editingVehicle.mileage));
+      setColor(editingVehicle.color);
+      setNickname(editingVehicle.nickname || '');
+      setImageUrl(editingVehicle.image_url || '');
+    } else {
+      // Reset form fields when adding a new vehicle
+      setYear('');
+      setMake('');
+      setModel('');
+      setTrim('');
+      setVin('');
+      setMileage('');
+      setColor('');
+      setNickname('');
+      setImageUrl('');
+    }
+  }, [editingVehicle]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newVehicle = {
-      // id: String(Math.random()), // The backend will generate the ID
+    const vehicleToSave: Vehicle = {
       year: parseInt(year),
       make,
       model,
@@ -43,139 +82,138 @@ export function AddVehicleForm({ open, onOpenChange, onAddVehicle }: AddVehicleF
       nickname,
       image_url,
     };
-    onAddVehicle && onAddVehicle(newVehicle);
+
+    if (editingVehicle?.id) {
+      vehicleToSave.id = editingVehicle.id;
+    }
+
+    onSaveVehicle(vehicleToSave);
     onOpenChange(false); // Close the modal
-    // Reset form fields
-    setYear('');
-    setMake('');
-    setModel('');
-    setTrim('');
-    setVin('');
-    setMileage('');
-    setColor('');
-    setNickname('');
-    setImageUrl('');
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
-          <DialogTitle>Add New Vehicle</DialogTitle>
+          <DialogTitle>{editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
           <DialogDescription>
-            Enter the details of your vehicle. Click save when you're done.
+            {editingVehicle ? 'Edit the details of your vehicle.' : 'Enter the details of your vehicle.'} Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="year" className="text-right">
-              Year
-            </Label>
-            <Input
-              id="year"
-              type="number"
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              className="col-span-3"
-              required
-            />
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+          <div className="grid gap-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="year" className="text-right">
+                Year
+              </Label>
+              <Input
+                id="year"
+                type="number"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="make" className="text-right">
+                Make
+              </Label>
+              <Input
+                id="make"
+                value={make}
+                onChange={(e) => setMake(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="model" className="text-right">
+                Model
+              </Label>
+              <Input
+                id="model"
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="trim" className="text-right">
+                Trim
+              </Label>
+              <Input
+                id="trim"
+                value={trim}
+                onChange={(e) => setTrim(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="make" className="text-right">
-              Make
-            </Label>
-            <Input
-              id="make"
-              value={make}
-              onChange={(e) => setMake(e.target.value)}
-              className="col-span-3"
-              required
-            />
+          <div className="grid gap-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="vin" className="text-right">
+                VIN
+              </Label>
+              <Input
+                id="vin"
+                value={vin}
+                onChange={(e) => setVin(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="mileage" className="text-right">
+                Mileage
+              </Label>
+              <Input
+                id="mileage"
+                type="number"
+                value={mileage}
+                onChange={(e) => setMileage(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="color" className="text-right">
+                Color
+              </Label>
+              <Input
+                id="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="col-span-3"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="nickname" className="text-right">
+                Nickname
+              </Label>
+              <Input
+                id="nickname"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="image_url" className="text-right">
+                Image URL
+              </Label>
+              <Input
+                id="image_url"
+                type="url"
+                value={image_url}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="model" className="text-right">
-              Model
-            </Label>
-            <Input
-              id="model"
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              className="col-span-3"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="trim" className="text-right">
-              Trim
-            </Label>
-            <Input
-              id="trim"
-              value={trim}
-              onChange={(e) => setTrim(e.target.value)}
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="vin" className="text-right">
-              VIN
-            </Label>
-            <Input
-              id="vin"
-              value={vin}
-              onChange={(e) => setVin(e.target.value)}
-              className="col-span-3"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="mileage" className="text-right">
-              Mileage
-            </Label>
-            <Input
-              id="mileage"
-              type="number"
-              value={mileage}
-              onChange={(e) => setMileage(e.target.value)}
-              className="col-span-3"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="color" className="text-right">
-              Color
-            </Label>
-            <Input
-              id="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="col-span-3"
-              required
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="nickname" className="text-right">
-              Nickname
-            </Label>
-            <Input
-              id="nickname"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="image_url" className="text-right">
-              Image URL
-            </Label>
-            <Input
-              id="image_url"
-              type="url"
-              value={image_url}
-              onChange={(e) => setImageUrl(e.target.value)}
-              className="col-span-3"
-            />
-          </div>
-          <DialogFooter>
+          <DialogFooter className="col-span-full">
             <Button type="submit">Save Vehicle</Button>
           </DialogFooter>
         </form>

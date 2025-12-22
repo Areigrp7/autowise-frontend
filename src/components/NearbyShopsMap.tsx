@@ -56,6 +56,15 @@ interface NearbyShopsMapProps {
 
 const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, setSelectedShop, mapCenter, userLat, userLng }) => {
 
+  const yellowIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
   const RoutingMachine = () => {
     const map = useMap();
 
@@ -156,6 +165,12 @@ const NearbyShopsMap: React.FC<NearbyShopsMapProps> = ({ shops, selectedShop, se
           </Popup>
         </Marker>
       ))}
+
+      {userLat && userLng && (
+        <Marker position={[userLat, userLng]} icon={yellowIcon}>
+          <Popup>Your Current Location</Popup>
+        </Marker>
+      )}
       <RoutingMachine />
     </MapContainer>
   );
