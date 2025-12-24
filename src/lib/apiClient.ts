@@ -59,6 +59,16 @@ export const addVehicle = async (vehiclePayload: any): Promise<any> => {
   return makeApiRequest('post', '/vehicles', vehiclePayload);
 };
 
+
+
+export const getMaintenanceRecords = async (): Promise<any> => {
+  return makeApiRequest('get', '/maintenance');
+};
+
+export const addMaintenanceRecord = async (recordPayload: any): Promise<any> => {
+  return makeApiRequest('post', '/maintenance', recordPayload);
+};
+
 export const updateVehicle = async (vehicleId: string, vehiclePayload: any): Promise<any> => {
   return makeApiRequest('put', `/vehicles/${vehicleId}`, vehiclePayload);
 };
@@ -66,4 +76,21 @@ export const updateVehicle = async (vehicleId: string, vehiclePayload: any): Pro
 export const deleteVehicle = async (vehicleId: string): Promise<any> => {
   return makeApiRequest('delete', `/vehicles/${vehicleId}`);
 };
+
+export const getQuoteRequests = async (): Promise<any> => {
+  return makeApiRequest('get', '/quote_requests');
+};
+
+export const createQuoteRequest = async (quotePayload: any): Promise<any> => {
+  return makeApiRequest('post', '/quote_requests', quotePayload);
+};
+
+export const updateQuoteRequestStatus = async (quoteId: number, status: 'Accepted' | 'Rejected' | 'Expired'): Promise<any> => {
+  return makeApiRequest('put', `/quote_requests/${quoteId}/status`, { status });
+};
+
+export const getActiveQuoteRequests = async (): Promise<any> => {
+  return makeApiRequest('get', '/quote_requests/active');
+};
+
 export default apiClient;

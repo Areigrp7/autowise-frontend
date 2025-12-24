@@ -8,11 +8,11 @@ import { CustomSelect } from '@/components/CustomSelect';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Layout from '@/components/Layout';
-import { 
-  Clock, 
-  Star, 
-  MapPin, 
-  Calendar, 
+import {
+  Clock,
+  Star,
+  MapPin,
+  Calendar,
   DollarSign,
   Wrench,
   Shield,
@@ -24,6 +24,7 @@ import {
   Phone,
   Timer
 } from 'lucide-react';
+import { getQuoteRequests, createQuoteRequest, getActiveQuoteRequests, updateQuoteRequestStatus } from '@/lib/apiClient';
 
 interface Bid {
   id: string;
@@ -43,21 +44,27 @@ interface Bid {
 }
 
 interface QuoteRequest {
-  id: string;
-  partName: string;
-  partBrand: string;
-  partPrice: number;
-  vehicle: string;
+  id: number;
+  user_id: number;
+  part_price: string;
+  preferred_date: string;
+  expires_at: string;
   description: string;
-  preferredDate: string;
+  status: 'Pending' | 'Accepted' | 'Rejected' | 'Expired';
+  part_name: string;
+  part_brand: string;
   urgency: 'Low' | 'Medium' | 'High';
-  status: 'Active' | 'Completed' | 'Expired';
-  createdAt: string;
-  expiresAt: string;
+  vehicle: string;
+  created_at: string;
 }
 
 type UrgencyType = 'Low' | 'Medium' | 'High';
 
+ const urgencyOptions = [
+    { value: 'Low', label: 'Low - Within a week' },
+    { value: 'Medium', label: 'Medium - Within 2-3 days' },
+    { value: 'High', label: 'High - ASAP' }
+  ];
 export default function QuoteBiddingPage() {
   const [activeTab, setActiveTab] = useState<'create' | 'active' | 'history'>('create');
   const [newQuote, setNewQuote] = useState({
@@ -70,38 +77,37 @@ export default function QuoteBiddingPage() {
     urgency: 'Medium' as UrgencyType
   });
   const [liveBids, setLiveBids] = useState<Bid[]>([]);
+  const [quoteHistory, setQuoteHistory] = useState<QuoteRequest[]>([]);
+  const [activeQuote, setActiveQuote] = useState<QuoteRequest | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(3600); // 1 hour in seconds
 
-  const urgencyOptions = [
-    { value: 'Low', label: 'Low - Within a week' },
-    { value: 'Medium', label: 'Medium - Within 2-3 days' },
-    { value: 'High', label: 'High - ASAP' }
-  ];
-
-  // Mock active quote
-  const activeQuote: QuoteRequest = {
-    id: 'q123',
-    partName: 'Brake Pads Front Set',
-    partBrand: 'Brembo',
-    partPrice: 89.99,
-    vehicle: '2019 Toyota Camry',
-    description: 'Need brake pads replaced. Hearing squealing noise when braking.',
-    preferredDate: '2024-01-15',
-    urgency: 'Medium',
-    status: 'Active',
-    createdAt: '2024-01-10T10:00:00Z',
-    expiresAt: '2024-01-11T10:00:00Z'
-  };
 
   // Simulate live bidding
   useEffect(() => {
+    let timer: NodeJS.Timeout;
+    let bidTimer: NodeJS.Timeout;
+
     if (activeTab === 'active') {
-      const timer = setInterval(() => {
+      const fetchActiveQuote = async () => {
+        try {
+          const data = await getActiveQuoteRequests();
+          if (data && data.length > 0) {
+            setActiveQuote(data[0]);
+          } else {
+            setActiveQuote(null);
+          }
+        } catch (error) {
+          console.error('Error fetching active quote:', error);
+        }
+      };
+      fetchActiveQuote();
+
+      timer = setInterval(() => {
         setTimeRemaining(prev => Math.max(0, prev - 1));
       }, 1000);
 
       // Simulate new bids coming in
-      const bidTimer = setTimeout(() => {
+      bidTimer = setTimeout(() => {
         const newBid: Bid = {
           id: `bid_${Date.now()}`,
           shopId: 'shop_4',
@@ -124,6 +130,16 @@ export default function QuoteBiddingPage() {
         clearInterval(timer);
         clearTimeout(bidTimer);
       };
+    } else if (activeTab === 'history') {
+      const fetchQuoteHistory = async () => {
+        try {
+          const data = await getQuoteRequests();
+          setQuoteHistory(data);
+        } catch (error) {
+          console.error('Error fetching quote history:', error);
+        }
+      };
+      fetchQuoteHistory();
     }
   }, [activeTab]);
 
@@ -184,18 +200,65 @@ export default function QuoteBiddingPage() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleCreateQuote = () => {
+  const handleCreateQuote = async () => {
     if (!newQuote.description || !newQuote.preferredDate) {
       alert('Please fill in all required fields');
       return;
     }
-    setActiveTab('active');
+
+    try {
+      const quotePayload = {
+        part_name: newQuote.partName,
+        part_brand: newQuote.partBrand,
+        part_price: newQuote.partPrice.toFixed(2), // Ensure two decimal places
+        vehicle: newQuote.vehicle,
+        description: newQuote.description,
+        preferred_date: newQuote.preferredDate,
+        urgency: newQuote.urgency,
+        user_id: 1, // Assuming a default user_id for now
+        status: 'Pending', // Initial status
+        expires_at: new Date(new Date().setDate(new Date().getDate() + 14)).toISOString(), // 14 days from now
+      };
+      const response = await createQuoteRequest(quotePayload);
+      setActiveQuote(response);
+      setNewQuote({
+        partName: 'Brake Pads Front Set',
+        partBrand: 'Brembo',
+        partPrice: 89.99,
+        vehicle: '2019 Toyota Camry',
+        description: '',
+        preferredDate: '',
+        urgency: 'Medium' as UrgencyType,
+      });
+      setActiveTab('active');
+    } catch (error) {
+      console.error('Error creating quote request:', error);
+      alert('Failed to create quote request. Please try again.');
+    }
   };
 
-  const handleAcceptBid = (bidId: string) => {
-    setLiveBids(prev => prev.map(bid => 
-      bid.id === bidId ? { ...bid, isAccepted: true } : bid
-    ));
+  const handleAcceptBid = async (bidId: string) => {
+    if (!activeQuote) return;
+
+    try {
+      // Update the bid status locally
+      setLiveBids(prev => prev.map(bid =>
+        bid.id === bidId ? { ...bid, isAccepted: true } : bid
+      ));
+
+      // Update the quote status on the backend
+      const updatedQuote = { ...activeQuote, status: 'Accepted' as const };
+      await updateQuoteRequestStatus(updatedQuote.id, 'Accepted');
+
+      // Move active quote to history and clear active quote
+      setQuoteHistory(prev => [updatedQuote, ...prev]);
+      setActiveQuote(null);
+      setLiveBids([]);
+      setActiveTab('history'); // Optionally navigate to history tab
+    } catch (error) {
+      console.error('Error accepting bid and updating quote status:', error);
+      alert('Failed to accept bid. Please try again.');
+    }
   };
 
   return (
@@ -351,179 +414,196 @@ export default function QuoteBiddingPage() {
         {/* Active Quotes Tab */}
         {activeTab === 'active' && (
           <div className="space-y-6">
-            {/* Quote Status */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      Quote Request: {activeQuote.partName}
-                      <Badge variant="secondary">Active</Badge>
-                    </CardTitle>
-                    <CardDescription>
-                      {activeQuote.partBrand} • {activeQuote.vehicle}
-                    </CardDescription>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2 text-red-600 font-medium">
-                      <Timer className="h-4 w-4" />
-                      {formatTime(timeRemaining)}
-                    </div>
-                    <p className="text-sm text-gray-500">Time remaining</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Part Price</p>
-                    <p className="font-medium">${activeQuote.partPrice}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Preferred Date</p>
-                    <p className="font-medium">{new Date(activeQuote.preferredDate).toLocaleDateString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Urgency</p>
-                    <Badge variant={activeQuote.urgency === 'High' ? 'destructive' : 'secondary'}>
-                      {activeQuote.urgency}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Description</p>
-                  <p className="text-sm">{activeQuote.description}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Live Bids */}
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Live Bids ({liveBids.length})</h2>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-gray-600">Receiving bids...</span>
-              </div>
-            </div>
-
-            <div className="grid gap-4">
-              {liveBids.map((bid, index) => (
-                <Card key={bid.id} className={`${bid.isAccepted ? 'ring-2 ring-green-500 bg-green-50' : ''} ${index === 0 ? 'border-green-500' : ''}`}>
-                  <CardHeader className="pb-3">
+            {activeQuote ? (
+              <>
+                {/* Quote Status */}
+                <Card>
+                  <CardHeader>
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback>{bid.shopName.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-lg flex items-center gap-2">
-                            {bid.shopName}
-                            {index === 0 && !bid.isAccepted && (
-                              <Badge variant="secondary" className="text-green-700 bg-green-100">
-                                Lowest Bid
-                              </Badge>
-                            )}
-                            {bid.isAccepted && (
-                              <Badge className="bg-green-600">
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Accepted
-                              </Badge>
-                            )}
-                          </CardTitle>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                              <span>{bid.shopRating}</span>
-                              <span>({bid.shopReviews})</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              <span>{bid.shopDistance}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>Bid at {bid.bidTime}</span>
-                            </div>
-                          </div>
-                        </div>
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          Quote Request: {activeQuote.partName}
+                          <Badge variant="secondary">Active</Badge>
+                        </CardTitle>
+                        <CardDescription>
+                          {activeQuote.partBrand} • {activeQuote.vehicle}
+                        </CardDescription>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600">${bid.laborCost}</div>
-                        <div className="text-sm text-gray-600">Labor cost</div>
+                        <div className="flex items-center gap-2 text-red-600 font-medium">
+                          <Timer className="h-4 w-4" />
+                          {formatTime(timeRemaining)}
+                        </div>
+                        <p className="text-sm text-gray-500">Time remaining</p>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                       <div>
-                        <p className="text-sm text-gray-600">Estimated Time</p>
-                        <p className="font-medium">{bid.estimatedTime}</p>
+                        <p className="text-sm text-gray-600">Part Price</p>
+                        <p className="font-medium">${activeQuote.partPrice}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Warranty</p>
-                        <p className="font-medium">{bid.warranty}</p>
+                        <p className="text-sm text-gray-600">Preferred Date</p>
+                        <p className="font-medium">{new Date(activeQuote.preferredDate).toLocaleDateString()}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Next Available</p>
-                        <p className="font-medium text-green-600">{bid.nextAvailable}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {bid.certifications.map((cert, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
-                          <Award className="h-3 w-3 mr-1" />
-                          {cert}
+                        <p className="text-sm text-gray-600">Urgency</p>
+                        <Badge variant={activeQuote.urgency === 'High' ? 'destructive' : 'secondary'}>
+                          {activeQuote.urgency}
                         </Badge>
-                      ))}
-                    </div>
-
-                    {bid.specialNotes && (
-                      <div className="bg-blue-50 p-3 rounded-lg mb-4">
-                        <p className="text-sm text-blue-800">
-                          <strong>Special Note:</strong> {bid.specialNotes}
-                        </p>
                       </div>
-                    )}
-
-                    <div className="flex gap-2">
-                      {!bid.isAccepted ? (
-                        <>
-                          <Button 
-                            onClick={() => handleAcceptBid(bid.id)}
-                            className="flex-1"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Accept Bid
-                          </Button>
-                          <Button variant="outline">
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Message
-                          </Button>
-                          <Button variant="outline">
-                            <Phone className="h-4 w-4 mr-2" />
-                            Call
-                          </Button>
-                        </>
-                      ) : (
-                        <div className="flex-1 flex items-center justify-center py-2 text-green-700 font-medium">
-                          <CheckCircle className="h-5 w-5 mr-2" />
-                          Bid Accepted - Proceed to booking
-                        </div>
-                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 mb-1">Description</p>
+                      <p className="text-sm">{activeQuote.description}</p>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
 
-            {liveBids.length === 0 && (
+                {/* Live Bids */}
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Live Bids ({liveBids.length})</h2>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-gray-600">Receiving bids...</span>
+                  </div>
+                </div>
+
+                <div className="grid gap-4">
+                  {liveBids.map((bid, index) => (
+                    <Card key={bid.id} className={`${bid.isAccepted ? 'ring-2 ring-green-500 bg-green-50' : ''} ${index === 0 ? 'border-green-500' : ''}`}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback>{bid.shopName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-lg flex items-center gap-2">
+                                {bid.shopName}
+                                {index === 0 && !bid.isAccepted && (
+                                  <Badge variant="secondary" className="text-green-700 bg-green-100">
+                                    Lowest Bid
+                                  </Badge>
+                                )}
+                                {bid.isAccepted && (
+                                  <Badge className="bg-green-600">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Accepted
+                                  </Badge>
+                                )}
+                              </CardTitle>
+                              <div className="flex items-center gap-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-1">
+                                  <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                  <span>{bid.shopRating}</span>
+                                  <span>({bid.shopReviews})</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
+                                  <span>{bid.shopDistance}</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-4 w-4" />
+                                  <span>Bid at {bid.bidTime}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-green-600">${bid.laborCost}</div>
+                            <div className="text-sm text-gray-600">Labor cost</div>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Estimated Time</p>
+                            <p className="font-medium">{bid.estimatedTime}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Warranty</p>
+                            <p className="font-medium">{bid.warranty}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Next Available</p>
+                            <p className="font-medium text-green-600">{bid.nextAvailable}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {bid.certifications.map((cert, i) => (
+                            <Badge key={i} variant="outline" className="text-xs">
+                              <Award className="h-3 w-3 mr-1" />
+                              {cert}
+                            </Badge>
+                          ))}
+                        </div>
+
+                        {bid.specialNotes && (
+                          <div className="bg-blue-50 p-3 rounded-lg mb-4">
+                            <p className="text-sm text-blue-800">
+                              <strong>Special Note:</strong> {bid.specialNotes}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          {!bid.isAccepted ? (
+                            <>
+                              <Button 
+                                onClick={() => handleAcceptBid(bid.id)}
+                                className="flex-1"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Accept Bid
+                              </Button>
+                              <Button variant="outline">
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Message
+                              </Button>
+                              <Button variant="outline">
+                                <Phone className="h-4 w-4 mr-2" />
+                                Call
+                              </Button>
+                            </>
+                          ) : (
+                            <div className="flex-1 flex items-center justify-center py-2 text-green-700 font-medium">
+                              <CheckCircle className="h-5 w-5 mr-2" />
+                              Bid Accepted - Proceed to booking
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                {liveBids.length === 0 && (
+                  <Card>
+                    <CardContent className="flex items-center justify-center py-12">
+                      <div className="text-center">
+                        <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Waiting for bids...</h3>
+                        <p className="text-gray-600">Your quote request has been sent to local shops. Bids will appear here as they come in.</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            ) : (
               <Card>
                 <CardContent className="flex items-center justify-center py-12">
                   <div className="text-center">
-                    <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">Waiting for bids...</h3>
-                    <p className="text-gray-600">Your quote request has been sent to local shops. Bids will appear here as they come in.</p>
+                    <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Quote Requests</h3>
+                    <p className="text-gray-600 mb-4">You don't have any active quote requests at the moment. Create a new one to get started!</p>
+                    <Button onClick={() => setActiveTab('create')}>
+                      Create New Quote Request
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -533,13 +613,63 @@ export default function QuoteBiddingPage() {
 
         {/* History Tab */}
         {activeTab === 'history' && (
-          <div className="text-center py-12">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No quote history yet</h3>
-            <p className="text-gray-600 mb-4">Your completed and expired quotes will appear here.</p>
-            <Button onClick={() => setActiveTab('create')}>
-              Create Your First Quote
-            </Button>
+          <div className="space-y-6">
+            <h2 className="text-2xl font-bold mb-4">Quote History</h2>
+            {quoteHistory.length > 0 ? (
+              <div className="grid gap-4">
+                {quoteHistory.map(quote => (
+                  <Card key={quote.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            {quote.part_name}
+                            <Badge variant="secondary">{quote.status}</Badge>
+                          </CardTitle>
+                          <CardDescription>
+                            {quote.part_brand} • {quote.vehicle}
+                          </CardDescription>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-bold text-green-600">${quote.part_price}</div>
+                          <p className="text-sm text-gray-600">Part Price</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Preferred Date</p>
+                          <p className="font-medium">{new Date(quote.preferred_date).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Urgency</p>
+                          <Badge variant={quote.urgency === 'High' ? 'destructive' : 'secondary'}>
+                            {quote.urgency}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 mb-1">Description</p>
+                        <p className="text-sm">{quote.description}</p>
+                      </div>
+                      <div className="text-sm text-gray-500 mt-4">
+                        Requested on: {new Date(quote.created_at).toLocaleDateString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No quote history yet</h3>
+                <p className="text-gray-600 mb-4">Your completed and expired quotes will appear here.</p>
+                <Button onClick={() => setActiveTab('create')}>
+                  Create Your First Quote
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>

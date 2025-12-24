@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Layout from '@/components/Layout';
 import { AddVehicleForm } from '@/components/AddVehicleForm';
-import { addVehicle, getVehicles, updateVehicle, deleteVehicle } from '@/lib/apiClient';
+import { addVehicle, getVehicles, updateVehicle, deleteVehicle, getMaintenanceRecords, addMaintenanceRecord } from '@/lib/apiClient';
 import { AddMaintenanceRecordForm } from '@/components/AddMaintenanceRecordForm';
 import { AddReminderForm } from '@/components/AddReminderForm';
 import {
@@ -48,17 +48,19 @@ interface Vehicle {
 }
 
 interface MaintenanceRecord {
-  id: string;
-  vehicleId: string;
+  id: number;
+  vehicle_id: number;
+  type: string;
   date: string;
-  type: 'service' | 'repair' | 'inspection';
-  description: string;
   mileage: number;
-  cost: number;
+  cost: string;
+  description: string;
   shop: string;
-  nextDue?: string;
-  nextMileage?: number;
+  next_due?: string;
+  next_mileage?: number;
   status: 'completed' | 'scheduled' | 'overdue';
+  created_at: string;
+  updated_at: string;
 }
 
 interface Reminder {
@@ -82,44 +84,7 @@ export default function MyGaragePage() {
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
-  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([
-    {
-      id: '1',
-      vehicleId: '1',
-      date: '2024-01-05',
-      type: 'service',
-      description: 'Oil Change & Filter Replacement',
-      mileage: 45000,
-      cost: 45.99,
-      shop: 'QuickFix Auto Service',
-      nextDue: '2024-04-05',
-      nextMileage: 48000,
-      status: 'completed'
-    },
-    {
-      id: '2',
-      vehicleId: '1',
-      date: '2023-12-15',
-      type: 'repair',
-      description: 'Brake Pad Replacement - Front',
-      mileage: 44800,
-      cost: 289.99,
-      shop: 'Premier Automotive',
-      status: 'completed'
-    },
-    {
-      id: '3',
-      vehicleId: '2',
-      date: '2024-01-20',
-      type: 'inspection',
-      description: 'Annual State Inspection',
-      mileage: 78200,
-      cost: 25.00,
-      shop: 'City Motors Garage',
-      nextDue: '2025-01-20',
-      status: 'completed'
-    }
-  ]);
+  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
 
   const [reminders, setReminders] = useState<Reminder[]>([
     {
@@ -163,7 +128,17 @@ export default function MyGaragePage() {
       }
     };
 
+    const fetchMaintenanceRecords = async () => {
+      try {
+        const data = await getMaintenanceRecords();
+        setMaintenanceRecords(data);
+      } catch (error) {
+        console.error('Error fetching maintenance records:', error);
+      }
+    };
+
     fetchVehicles();
+    fetchMaintenanceRecords();
   }, []);
 
   const handleAddVehicle = async (newVehicle: Vehicle) => {
@@ -176,9 +151,25 @@ export default function MyGaragePage() {
     }
   };
 
-  const handleAddMaintenanceRecord = (newRecord: MaintenanceRecord) => {
-    setMaintenanceRecords((prevRecords) => [...prevRecords, newRecord]);
+  const handleAddMaintenanceRecord = async (newRecord: MaintenanceRecord) => {
+    try {
+      await addMaintenanceRecord(newRecord);
+      const updatedRecords = await getMaintenanceRecords();
+      setMaintenanceRecords(updatedRecords);
+    } catch (error) {
+      console.error('Error adding maintenance record:', error);
+    }
   };
+
+  // const handleAddMaintenanceRecord = async (newRecord: MaintenanceRecord) => {
+  //   try {
+  //     await addMaintenanceRecord(newRecord);
+  //     const updatedRecords = await getMaintenanceRecords();
+  //     setMaintenanceRecords(updatedRecords);
+  //   } catch (error) {
+  //     console.error('Error adding maintenance record:', error);
+  //   }
+  // };
 
   const handleAddReminder = (newReminder: Reminder) => {
     setReminders((prevReminders) => [...prevReminders, newReminder]);
