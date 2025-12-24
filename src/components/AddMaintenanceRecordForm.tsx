@@ -82,14 +82,14 @@ export function AddMaintenanceRecordForm({ open, onOpenChange, onAddMaintenanceR
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent className="w-11/12 max-w-lg md:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Add New Maintenance Record</DialogTitle>
           <DialogDescription>
             Enter the details of the maintenance record. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 md:p-6 lg:p-8">
           <div className="grid gap-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="vehicleId" className="text-right">
@@ -229,7 +229,7 @@ export function AddMaintenanceRecordForm({ open, onOpenChange, onAddMaintenanceR
               </Select>
             </div>
           </div>
-          <DialogFooter className="col-span-full">
+          <DialogFooter className="col-span-full flex justify-center md:justify-end mt-4">
             <Button type="submit">Save Record</Button>
           </DialogFooter>
         </form>

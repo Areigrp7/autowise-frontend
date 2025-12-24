@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,7 @@ import {
   ShoppingCart,
   User,
   Menu,
+  X,
   Car,
   Wrench,
   MapPin,
@@ -34,6 +36,7 @@ export default function Layout({ children, currentPage }: LayoutProps) {
   const location = useLocation();
   const { getCartTotalQuantity } = useCart(); // Use the cart hook
   const cartQuantity = getCartTotalQuantity();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname === '/') return true;
@@ -147,13 +150,74 @@ export default function Layout({ children, currentPage }: LayoutProps) {
               <Button variant="ghost" size="sm">
                 <User className="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="sm" className="md:hidden">
+              <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
                 <Menu className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 bg-white z-50 flex flex-col">
+          <div className="flex items-center justify-between h-16 px-4 border-b">
+            <Link to="/" className="flex items-center space-x-2" onClick={() => setIsMobileMenuOpen(false)}>
+              <img src="/autowise_logo_transparent.webp" alt="AutoWise Logo" className="h-28" />
+            </Link>
+            <Button variant="ghost" size="sm" onClick={() => setIsMobileMenuOpen(false)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <nav className="flex flex-col p-4 space-y-2">
+            <Link
+              to="/"
+              className={`text-lg font-medium py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+                isActive('/') ? 'text-blue-600 bg-gray-100' : 'text-gray-700'
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              to="/parts"
+              className={`text-lg font-medium py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+                isActive('/parts') ? 'text-blue-600 bg-gray-100' : 'text-gray-700'
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Parts Search
+            </Link>
+            <Link
+              to="/shops-map"
+              className={`text-lg font-medium py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+                isActive('/shops') ? 'text-blue-600 bg-gray-100' : 'text-gray-700'
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Find Shops
+            </Link>
+            <Link
+              to="/quote-bidding"
+              className={`text-lg font-medium py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+                isActive('/quote') ? 'text-blue-600 bg-gray-100' : 'text-gray-700'
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Get Quotes
+            </Link>
+            <Link
+              to="/my-garage"
+              className={`text-lg font-medium py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+                isActive('/my-garage') || isActive('/dashboard') ? 'text-blue-600 bg-gray-100' : 'text-gray-700'
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              My Garage
+            </Link>
+          </nav>
+        </div>
+      )}
 
       {/* Main Content */}
       <main className="flex-1">

@@ -96,6 +96,7 @@ export default function PartsSearchPage() {
   const [sortBy, setSortBy] = useState('bestValue');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [compareList, setCompareList] = useState<string[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(new Set(parts.map(part => part.category)));
@@ -267,14 +268,30 @@ export default function PartsSearchPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
+            <Button
+              variant="outline"
+              className="lg:hidden w-full mb-4 flex items-center justify-center"
+              onClick={() => setFiltersOpen(!filtersOpen)}
+            >
+              <Filter className="h-5 w-5 mr-2" />
+              {filtersOpen ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+            <Card className={filtersOpen ? 'block' : 'hidden lg:block'}>
+              <CardHeader className="flex flex-row items-center justify-between lg:block">
                 <CardTitle className="flex items-center">
                   <Filter className="h-5 w-5 mr-2" />
                   Filters
                 </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden"
+                  onClick={() => setFiltersOpen(false)}
+                >
+                  <Filter className="h-5 w-5" />
+                </Button>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 pt-4">
                 {/* Price Range */}
                 <div>
                   <label className="text-sm font-medium mb-3 block">Price Range</label>
@@ -301,8 +318,11 @@ export default function PartsSearchPage() {
                           id={`brand-${brand}`}
                           checked={selectedBrands.includes(brand)}
                           onCheckedChange={() => toggleBrand(brand)}
+                          className="h-4 w-4"
                         />
-                        <label htmlFor={`brand-${brand}`} className="text-sm">{brand}</label>
+                        <label htmlFor={`brand-${brand}`} className="text-sm">
+                          {brand}
+                        </label>
                       </div>
                     ))}
                   </div>
@@ -315,6 +335,7 @@ export default function PartsSearchPage() {
                       id="oem"
                       checked={oemOnly}
                       onCheckedChange={setOemOnly}
+                      className="h-4 w-4"
                     />
                     <label htmlFor="oem" className="text-sm">OEM Parts Only</label>
                   </div>
@@ -323,6 +344,7 @@ export default function PartsSearchPage() {
                       id="instock"
                       checked={inStockOnly}
                       onCheckedChange={setInStockOnly}
+                      className="h-4 w-4"
                     />
                     
                     <label htmlFor="instock" className="text-sm">In Stock Only</label>
