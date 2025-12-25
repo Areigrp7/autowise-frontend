@@ -101,21 +101,40 @@ export default function ShopsMapPage() {
     }
   };
 
+  const getGeolocationErrorMessage = (error: GeolocationPositionError): string => {
+    switch (error.code) {
+      case error.PERMISSION_DENIED:
+        return "Location access was denied. Please enable location permissions in your browser settings and refresh the page.";
+      case error.POSITION_UNAVAILABLE:
+        return "Location information is unavailable. Please check your GPS settings or try again later.";
+      case error.TIMEOUT:
+        return "Location request timed out. Please check your internet connection and try again.";
+      default:
+        return "An unknown error occurred while retrieving your location. Please try again.";
+    }
+  };
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLat(position.coords.latitude);
           setUserLng(position.coords.longitude);
+          setGeolocationError(null); // Clear any previous errors
         },
         (err) => {
           console.error("Geolocation Error: ", err);
-          setGeolocationError(err.message);
+          setGeolocationError(getGeolocationErrorMessage(err));
           setLoading(false); // Stop loading if geolocation fails
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
         }
       );
     } else {
-      setGeolocationError("Geolocation is not supported by this browser.");
+      setGeolocationError("Geolocation is not supported by this browser. Please use a modern browser or enable location services.");
       setLoading(false); // Stop loading if geolocation is not supported
     }
   }, []);
@@ -334,7 +353,72 @@ export default function ShopsMapPage() {
   }
 
   if (geolocationError) {
-    return <Layout currentPage="shopsmap"><div>Geolocation Error: {geolocationError}</div></Layout>;
+    return (
+      <Layout currentPage="shopsmap">
+        <div className="container mx-auto px-4 py-6">
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-red-600">Location Access Required</CardTitle>
+              <CardDescription>
+                We need your location to find nearby auto shops
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">{geolocationError}</p>
+
+              <div className="space-y-2">
+                <Button
+                  onClick={() => {
+                    setGeolocationError(null);
+                    setLoading(true);
+                    // Retry geolocation
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          setUserLat(position.coords.latitude);
+                          setUserLng(position.coords.longitude);
+                          setGeolocationError(null);
+                          setLoading(false);
+                        },
+                        (err) => {
+                          console.error("Geolocation Error: ", err);
+                          setGeolocationError(getGeolocationErrorMessage(err));
+                          setLoading(false);
+                        },
+                        {
+                          enableHighAccuracy: true,
+                          timeout: 10000,
+                          maximumAge: 300000
+                        }
+                      );
+                    }
+                  }}
+                  className="w-full"
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Try Again
+                </Button>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-2">Or search by location:</p>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter city, state or zip code"
+                      value={searchLocation}
+                      onChange={(e) => setSearchLocation(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    />
+                    <Button onClick={handleSearch} variant="outline">
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
   }
 
   if (error) {

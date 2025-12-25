@@ -28,20 +28,61 @@ interface BeforeInstallPromptEvent extends Event {
 const App = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    // Check if app is already installed
+    const checkInstalled = () => {
+      // Check if running in standalone mode (PWA)
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      // Check if running as PWA on iOS
+      const isIOSPWA = (window.navigator as any).standalone === true;
+
+      if (isStandalone || isIOSPWA) {
+        setIsInstalled(true);
+        return;
+      }
+
+      // Check if app was previously installed (user dismissed or installed)
+      const installDismissed = localStorage.getItem('pwa-install-dismissed');
+      if (installDismissed) {
+        const dismissedTime = parseInt(installDismissed);
+        const now = Date.now();
+        // Show prompt again after 7 days if dismissed
+        if (now - dismissedTime > 7 * 24 * 60 * 60 * 1000) {
+          localStorage.removeItem('pwa-install-dismissed');
+        } else {
+          return;
+        }
+      }
+    };
+
+    checkInstalled();
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowPrompt(true);
+      // Only show prompt if not already installed and not recently dismissed
+      if (!isInstalled && !localStorage.getItem('pwa-install-dismissed')) {
+        setShowPrompt(true);
+      }
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
+    // Listen for app installation
+    window.addEventListener('appinstalled', () => {
+      setIsInstalled(true);
+      setShowPrompt(false);
+      setDeferredPrompt(null);
+      localStorage.removeItem('pwa-install-dismissed');
+    });
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', checkInstalled);
     };
-  }, []);
+  }, [isInstalled]);
 
   const handleInstallClick = () => {
     if (deferredPrompt) {
@@ -60,6 +101,8 @@ const App = () => {
 
   const handleClosePrompt = () => {
     setShowPrompt(false);
+    // Remember that user dismissed the prompt
+    localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
   return (
@@ -90,6 +133,7 @@ const App = () => {
           isVisible={showPrompt}
           onClose={handleClosePrompt}
           onInstall={handleInstallClick}
+          canManuallyInstall={!deferredPrompt}
         />
       </TooltipProvider>
     </QueryClientProvider>
