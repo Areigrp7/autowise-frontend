@@ -300,7 +300,7 @@ export default function HomePage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2">
             {featuredDeals.map((deal, index) => (
               <Card 
                 key={`deal-${index}`} 
@@ -375,7 +375,7 @@ export default function HomePage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 px-2">
             {nearbyShops.map((shop, index) => (
               <Card 
                 key={`shop-${index}`} 
