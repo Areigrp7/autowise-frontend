@@ -52,8 +52,8 @@ export default function HomePage() {
   const { addToCart } = useCart();
 
   const years = Array.from({ length: 25 }, (_, i) => ({
-    value: (2024 - i).toString(),
-    label: (2024 - i).toString()
+    value: (2025 - i).toString(),
+    label: (2025 - i).toString()
   }));
 
   const makes = [

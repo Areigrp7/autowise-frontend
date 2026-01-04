@@ -13,7 +13,13 @@ import NotFound from './pages/NotFound';
 import Register from './pages/Register'; // Import Register component
 import Login from './pages/Login'; // Import Login component
 import Checkout from './pages/Checkout'; // Import Checkout component
+import CheckoutSuccess from './pages/CheckoutSuccess'; // Import CheckoutSuccess component
+import CheckoutCancel from './pages/CheckoutCancel'; // Import CheckoutCancel component
+import StripeDebug from './components/StripeDebug'; // Import StripeDebug component
+import AdminDashboard from './pages/AdminDashboard'; // Import AdminDashboard component
 import { CartProvider } from './context/CartContext'; // Import CartProvider
+import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
+import ProtectedAdminRoute from './components/ProtectedAdminRoute'; // Import ProtectedAdminRoute
 import AddToHomeScreenPrompt from './components/AddToHomeScreenPrompt'; // Import AddToHomeScreenPrompt
 import "leaflet/dist/leaflet.css";
 
@@ -110,8 +116,9 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <BrowserRouter>
-          <CartProvider> {/* Wrap Routes with CartProvider */}
-            <Routes>
+          <AuthProvider>
+            <CartProvider> {/* Wrap Routes with CartProvider */}
+              <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/parts" element={<PartsSearch />} />
               {/* <Route path="/parts-search" element={<PartsSearch />} /> */}
@@ -125,9 +132,18 @@ const App = () => {
               <Route path="/register" element={<Register />} /> {/* Add Register route */}
               <Route path="/login" element={<Login />} /> {/* Add Login route */}
               <Route path="/checkout" element={<Checkout />} /> {/* Add Checkout route */}
+              <Route path="/checkout/success" element={<CheckoutSuccess />} /> {/* Add Checkout Success route */}
+              <Route path="/checkout/cancel" element={<CheckoutCancel />} /> {/* Add Checkout Cancel route */}
+              <Route path="/stripe-debug" element={<StripeDebug />} /> {/* Add Stripe Debug route */}
+              <Route path="/admin" element={
+                <ProtectedAdminRoute>
+                  <AdminDashboard />
+                </ProtectedAdminRoute>
+              } /> {/* Add Protected Admin Dashboard route */}
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </CartProvider>
+              </Routes>
+            </CartProvider>
+          </AuthProvider>
         </BrowserRouter>
         <AddToHomeScreenPrompt
           isVisible={showPrompt}

@@ -1,28 +1,76 @@
 {
-  "short_name": "Autowise",
-  "name": "Autowise - Car Rental and Maintenance",
+  "short_name": "AutoWise",
+  "name": "AutoWise - Car Parts & Mechanics",
   "description": "Compare car parts prices, get installation quotes from verified mechanics, and save on automotive services.",
   "icons": [
     {
-      "src": "/autowise_logo_transparent.webp",
-      "sizes": "192x192",
+      "src": "/icons/icon-48.webp",
       "type": "image/webp",
-      "purpose": "any maskable"
+      "sizes": "48x48",
+      "purpose": "any"
     },
     {
-      "src": "/autowise_logo_transparent.webp",
-      "sizes": "512x512",
+      "src": "/icons/icon-72.webp",
       "type": "image/webp",
-      "purpose": "any maskable"
+      "sizes": "72x72",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96.webp",
+      "type": "image/webp",
+      "sizes": "96x96",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128.webp",
+      "type": "image/webp",
+      "sizes": "128x128",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.webp",
+      "type": "image/webp",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-256.webp",
+      "type": "image/webp",
+      "sizes": "256x256",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.webp",
+      "type": "image/webp",
+      "sizes": "512x512",
+      "purpose": "any"
     }
   ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "theme_color": "#000000",
+  "theme_color": "#2563eb",
   "background_color": "#ffffff",
-  "categories": ["business", "productivity", "utilities"],
+  "categories": [
+    "business",
+    "shopping",
+    "utilities"
+  ],
   "lang": "en-US",
-  "dir": "ltr"
+  "dir": "ltr",
+  "screenshots": [
+    {
+      "src": "/images/AutoParts.jpg",
+      "sizes": "1200x800",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/AutoRepair.jpg",
+      "sizes": "1200x800",
+      "type": "image/jpeg",
+      "form_factor": "wide"
+    }
+  ]
 }

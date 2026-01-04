@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AutoWise</string>
+    <string name="title_activity_main">AutoWise</string>
+    <string name="package_name">com.autowise.app</string>
+    <string name="custom_url_scheme">com.autowise.app</string>
+</resources>

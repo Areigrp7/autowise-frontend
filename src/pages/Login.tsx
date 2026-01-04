@@ -5,11 +5,13 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { loginUser } from '../lib/auth'; // Import the loginUser function
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,10 +19,21 @@ const Login = () => {
       const credentials = { email, password };
       const response = await loginUser(credentials);
       console.log('Login successful:', response);
-      // Store token and user info (e.g., in localStorage, context, or redux)
-      localStorage.setItem('token', response.token);
-      // Redirect to dashboard or home page on successful login
-      navigate('/'); // Redirect to home page
+
+      // Use auth context to store user data
+      login(response.token, {
+        id: response.user.id,
+        email: response.user.email,
+        role: response.user.role || 'user', // Default to 'user' if no role specified
+        name: response.user.name
+      });
+
+      // Redirect based on user role
+      if (response.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       console.error('Login failed:', error);
       // Display error message to the user

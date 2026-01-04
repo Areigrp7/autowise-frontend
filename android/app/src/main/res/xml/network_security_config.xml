@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">api.autowise.club</domain>
+        <domain includeSubdomains="true">autowise.club</domain>
+        <domain includeSubdomains="true">44.220.191.221</domain>
+    </domain-config>
+    <!-- Allow all connections for debugging -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

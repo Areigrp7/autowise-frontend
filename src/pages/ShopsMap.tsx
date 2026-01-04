@@ -27,7 +27,6 @@ import {
   ExternalLink
 } from 'lucide-react';
 import NearbyShopsMap from '../components/NearbyShopsMap';
-import AddEditShopForm from '../components/AddEditShopForm';
 
 interface Shop {
   id: number;
@@ -76,9 +75,6 @@ export default function ShopsMapPage() {
   const [geolocationError, setGeolocationError] = useState<string | null>(null);
   const [searchedLat, setSearchedLat] = useState<number | null>(null);
   const [searchedLng, setSearchedLng] = useState<number | null>(null);
-  const [isAddShopFormOpen, setIsAddShopFormOpen] = useState(false);
-  const [shopToEdit, setShopToEdit] = useState<Shop | null>(null);
-  const [myShops, setMyShops] = useState<Shop[]>([]);
 
   // Force linter re-evaluation
 
@@ -101,40 +97,21 @@ export default function ShopsMapPage() {
     }
   };
 
-  const getGeolocationErrorMessage = (error: GeolocationPositionError): string => {
-    switch (error.code) {
-      case error.PERMISSION_DENIED:
-        return "Location access was denied. Please enable location permissions in your browser settings and refresh the page.";
-      case error.POSITION_UNAVAILABLE:
-        return "Location information is unavailable. Please check your GPS settings or try again later.";
-      case error.TIMEOUT:
-        return "Location request timed out. Please check your internet connection and try again.";
-      default:
-        return "An unknown error occurred while retrieving your location. Please try again.";
-    }
-  };
-
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLat(position.coords.latitude);
           setUserLng(position.coords.longitude);
-          setGeolocationError(null); // Clear any previous errors
         },
         (err) => {
           console.error("Geolocation Error: ", err);
-          setGeolocationError(getGeolocationErrorMessage(err));
+          setGeolocationError(err.message);
           setLoading(false); // Stop loading if geolocation fails
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 // 5 minutes
         }
       );
     } else {
-      setGeolocationError("Geolocation is not supported by this browser. Please use a modern browser or enable location services.");
+      setGeolocationError("Geolocation is not supported by this browser.");
       setLoading(false); // Stop loading if geolocation is not supported
     }
   }, []);
@@ -153,6 +130,7 @@ export default function ShopsMapPage() {
           `/shops/nearby?lat=${lat}&lng=${lng}&radius=${radiusFilter}`
         );
         console.log("API response data:", data);
+        console.log("First shop address structure:", Array.isArray(data) ? data[0]?.address : data?.address);
         // Ensure shops is always an array
         if (Array.isArray(data)) {
           setShops(data);
@@ -170,18 +148,6 @@ export default function ShopsMapPage() {
 
     fetchShops();
   }, [userLat, userLng, searchedLat, searchedLng, radiusFilter]); // Rerun when userLat, userLng, searchedLat, searchedLng, or radiusFilter changes
-
-  useEffect(() => {
-    const fetchMyShops = async () => {
-      try {
-        const data: Shop[] = await makeApiRequest('get', '/shops');
-        setMyShops(data);
-      } catch (err: any) {
-        console.error("Error fetching my shops:", err);
-      }
-    };
-    fetchMyShops();
-  }, []); // Fetch user's shops on component mount
 
   const services = [
     { value: '', label: 'All Services' },
@@ -235,95 +201,6 @@ export default function ShopsMapPage() {
     }
   };
 
-  const handleAddShop = async (shopData: any) => {
-    try {
-      setLoading(true);
-      // Geocode the address to get coordinates
-      const fullAddress = `${shopData.address.street}, ${shopData.address.city}, ${shopData.address.state} ${shopData.address.zipCode}, ${shopData.address.country}`;
-      const coords = await geocodeLocation(fullAddress);
-
-      if (!coords) {
-        setError("Could not geocode the provided address. Please check the address details.");
-        setLoading(false);
-        return;
-      }
-
-      const newShop = {
-        ...shopData,
-        coordinates: { latitude: coords[0], longitude: coords[1] }, // Store as latitude, longitude
-        // Remove server-managed fields for POST request
-        // pricing: "Moderate",
-        // rating: "0.0",
-        // reviews: 0,
-        // stored_distance: "0 mi",
-        // next_available: "Immediately",
-        // verified: false,
-        // images: [],
-        // distance_km: 0,
-      };
-
-      const data = await makeApiRequest('post', '/shops', newShop) as any;
-      setShops(prevShops => [...prevShops, data.data]);
-      setIsAddShopFormOpen(false);
-      setSelectedShop(data.data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleEditShop = async (shopData: any) => {
-    if (!shopToEdit?.id) {
-      setError("No shop selected for editing.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      // Geocode the address if it has changed
-      let updatedCoordinates = shopToEdit.coordinates;
-      const currentFullAddress = `${shopToEdit.address?.street}, ${shopToEdit.address?.city}, ${shopToEdit.address?.state} ${shopToEdit.address?.zipCode}, ${shopToEdit.address?.country}`;
-      const newFullAddress = `${shopData.address.street}, ${shopData.address.city}, ${shopData.address.state} ${shopData.address.zipCode}, ${shopData.address.country}`;
-
-      if (currentFullAddress !== newFullAddress) {
-        const coords = await geocodeLocation(newFullAddress);
-        if (!coords) {
-          setError("Could not geocode the provided address. Please check the address details.");
-          setLoading(false);
-          return;
-        }
-        updatedCoordinates = { y: coords[0], x: coords[1] };
-      }
-
-      const updatedShop = {
-        ...shopData,
-        id: shopToEdit.id,
-        coordinates: updatedCoordinates,
-        // Keep other server-managed fields as they are
-        rating: shopToEdit.rating,
-        reviews: shopToEdit.reviews,
-        stored_distance: shopToEdit.stored_distance,
-        next_available: shopToEdit.next_available,
-        pricing: shopToEdit.pricing, // Assuming pricing isn't edited via this form
-        verified: shopToEdit.verified,
-        images: shopToEdit.images,
-        distance_km: shopToEdit.distance_km,
-      };
-
-      const data = await makeApiRequest('put', `/shops/${shopToEdit.id}`, updatedShop) as any;
-      setMyShops(prevShops => prevShops.map(shop => (shop.id === data.data.id ? data.data : shop)));
-      setShops(prevShops => prevShops.map(shop => (shop.id === data.data.id ? data.data : shop))); // Also update in all shops list
-      setIsAddShopFormOpen(false);
-      setSelectedShop(data.data);
-      setShopToEdit(null);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <Layout currentPage="shopsmap">
@@ -353,72 +230,7 @@ export default function ShopsMapPage() {
   }
 
   if (geolocationError) {
-    return (
-      <Layout currentPage="shopsmap">
-        <div className="container mx-auto px-4 py-6">
-          <Card className="max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle className="text-red-600">Location Access Required</CardTitle>
-              <CardDescription>
-                We need your location to find nearby auto shops
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600">{geolocationError}</p>
-
-              <div className="space-y-2">
-                <Button
-                  onClick={() => {
-                    setGeolocationError(null);
-                    setLoading(true);
-                    // Retry geolocation
-                    if (navigator.geolocation) {
-                      navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                          setUserLat(position.coords.latitude);
-                          setUserLng(position.coords.longitude);
-                          setGeolocationError(null);
-                          setLoading(false);
-                        },
-                        (err) => {
-                          console.error("Geolocation Error: ", err);
-                          setGeolocationError(getGeolocationErrorMessage(err));
-                          setLoading(false);
-                        },
-                        {
-                          enableHighAccuracy: true,
-                          timeout: 10000,
-                          maximumAge: 300000
-                        }
-                      );
-                    }
-                  }}
-                  className="w-full"
-                >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Try Again
-                </Button>
-
-                <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-2">Or search by location:</p>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter city, state or zip code"
-                      value={searchLocation}
-                      onChange={(e) => setSearchLocation(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    />
-                    <Button onClick={handleSearch} variant="outline">
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
+    return <Layout currentPage="shopsmap"><div>Geolocation Error: {geolocationError}</div></Layout>;
   }
 
   if (error) {
@@ -476,24 +288,20 @@ export default function ShopsMapPage() {
                     <TabsList>
                       <TabsTrigger value="map">Map View</TabsTrigger>
                       <TabsTrigger value="list">List View</TabsTrigger>
-                      <TabsTrigger value="my-shops">My Shops</TabsTrigger>
                     </TabsList>
                   </Tabs>
-                  <Button onClick={() => {setIsAddShopFormOpen(true); setShopToEdit(null);}}>Add New Shop</Button>
                 </div>
               </CardHeader>
               <CardContent className="h-[500px]">
                 {viewMode === 'map' ? (
-                    <NearbyShopsMap
-                      shops={shops}
-                      selectedShop={selectedShop}
-                      setSelectedShop={setSelectedShop}
-                      mapCenter={mapCenter}
-                      userLat={userLat}
-                      userLng={userLng}
-                      key={`${mapCenter[0]}-${mapCenter[1]}`}
-                    />
-                ) : viewMode === 'list' ? (
+                  <NearbyShopsMap
+                    shops={shops}
+                    selectedShop={selectedShop}
+                    setSelectedShop={setSelectedShop}
+                    mapCenter={mapCenter}
+                    key={`${mapCenter[0]}-${mapCenter[1]}`}
+                  />
+                ) : (
                   <div className="space-y-4 h-full overflow-y-auto">
                     {shops.map(shop => (
                       <Card
@@ -512,7 +320,7 @@ export default function ShopsMapPage() {
                                   <CheckCircle className="h-4 w-4 text-blue-500" />
                                 )}
                               </h3>
-                              <p className="text-sm text-gray-600">{shop.address.street}</p>
+                              <p className="text-sm text-gray-600">{shop.address.street}, {shop.address.city}, {shop.address.state}</p>
                             </div>
                             <div className="text-right">
                               <div className="flex items-center gap-1">
@@ -540,67 +348,6 @@ export default function ShopsMapPage() {
                                 {specialty}
                               </Badge>
                             ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4 h-full overflow-y-auto">
-                    {myShops.map(shop => (
-                      <Card
-                        key={shop.id}
-                        className={`cursor-pointer transition-all hover:shadow-md ${
-                          selectedShop?.id === shop.id ? 'ring-2 ring-blue-500' : ''
-                        }`}
-                        onClick={() => setSelectedShop(shop)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h3 className="font-semibold text-lg flex items-center gap-2">
-                                {shop.name}
-                                {shop.verified && (
-                                  <CheckCircle className="h-4 w-4 text-blue-500" />
-                                )}
-                              </h3>
-                              <p className="text-sm text-gray-600">{shop.address.street}</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="flex items-center gap-1">
-                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                <span className="font-medium">{shop.rating}</span>
-                                <span className="text-sm text-gray-500">({shop.reviews})</span>
-                              </div>
-                              <p className="text-sm text-gray-600">{shop.stored_distance}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge className={getPricingColor(shop.pricing)}>
-                              {shop.pricing}
-                            </Badge>
-                            <div className="flex items-center text-sm text-green-600">
-                              <Clock className="h-4 w-4 mr-1" />
-                              {shop.next_available}
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-1">
-                            {shop.specialties.slice(0, 3).map((specialty, i) => (
-                              <Badge key={i} variant="outline" className="text-xs">
-                                {specialty}
-                              </Badge>
-                            ))}
-                          </div>
-                          <div className="mt-2 flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={(e) => {
-                              e.stopPropagation();
-                              setShopToEdit(shop);
-                              setIsAddShopFormOpen(true);
-                            }}>
-                              Edit
-                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -624,7 +371,7 @@ export default function ShopsMapPage() {
                           <CheckCircle className="h-5 w-5 text-blue-500" />
                         )}
                       </CardTitle>
-                      <CardDescription>{selectedShop.address.street}</CardDescription>
+                      <CardDescription>{selectedShop.address.street}, {selectedShop.address.city}, {selectedShop.address.state}</CardDescription>
                     </div>
                     <Badge className={getPricingColor(selectedShop.pricing)}>
                       {selectedShop.pricing}
@@ -727,19 +474,11 @@ export default function ShopsMapPage() {
                       Book Appointment
                     </Button>
                     <div className="grid grid-cols-2 gap-2">
-                      <Button variant="outline" onClick={() => {
-                        if (selectedShop?.phone) {
-                          window.location.href = `tel:${selectedShop.phone}`;
-                        }
-                      }}>
+                      <Button variant="outline">
                         <Phone className="h-4 w-4 mr-2" />
                         Call
                       </Button>
-                      <Button variant="outline" onClick={() => {
-                        if (selectedShop) {
-                          setSelectedShop(selectedShop); // This will trigger the routing in NearbyShopsMap
-                        }
-                      }}>
+                      <Button variant="outline">
                         <Navigation className="h-4 w-4 mr-2" />
                         Directions
                       </Button>
@@ -764,15 +503,6 @@ export default function ShopsMapPage() {
           </div>
         </div>
       </div>
-      <AddEditShopForm
-        isOpen={isAddShopFormOpen}
-        onClose={() => {
-          setIsAddShopFormOpen(false);
-          setShopToEdit(null); // Clear shopToEdit when closing form
-        }}
-        onSubmit={shopToEdit ? handleEditShop : handleAddShop}
-        shop={shopToEdit}
-      />
     </Layout>
   );
 }

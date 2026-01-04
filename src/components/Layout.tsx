@@ -26,6 +26,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useCart } from '../context/CartContext'; // Import useCart
+import { useAuth } from '../context/AuthContext'; // Import useAuth
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -35,6 +36,7 @@ interface LayoutProps {
 export default function Layout({ children, currentPage }: LayoutProps) {
   const location = useLocation();
   const { getCartTotalQuantity } = useCart(); // Use the cart hook
+  const { isAuthenticated, isAdmin, logout } = useAuth(); // Use the auth hook
   const cartQuantity = getCartTotalQuantity();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -130,6 +132,16 @@ export default function Layout({ children, currentPage }: LayoutProps) {
               >
                 My Garage
               </Link>
+              {isAuthenticated && isAdmin && (
+                <Link
+                  to="/admin"
+                  className={`text-sm font-medium transition-colors hover:text-blue-600 ${
+                    isActive('/admin') ? 'text-blue-600' : 'text-gray-700'
+                  }`}
+                >
+                  Admin
+                </Link>
+              )}
             </nav>
 
             {/* Right side */}
@@ -147,9 +159,17 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                   )}
                 </Button>
               </Link>
-              <Button variant="ghost" size="sm">
-                <User className="h-4 w-4" />
-              </Button>
+              {isAuthenticated ? (
+                <Button variant="ghost" size="sm" onClick={logout}>
+                  Logout
+                </Button>
+              ) : (
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">
+                    Login
+                  </Button>
+                </Link>
+              )}
               <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setIsMobileMenuOpen(true)}>
                 <Menu className="h-4 w-4" />
               </Button>
@@ -215,6 +235,17 @@ export default function Layout({ children, currentPage }: LayoutProps) {
             >
               My Garage
             </Link>
+            {isAuthenticated && isAdmin && (
+              <Link
+                to="/admin"
+                className={`text-lg font-medium py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+                  isActive('/admin') ? 'text-blue-600 bg-gray-100' : 'text-gray-700'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Admin
+              </Link>
+            )}
           </nav>
         </div>
       )}
