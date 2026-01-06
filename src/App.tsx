@@ -17,9 +17,16 @@ import CheckoutSuccess from './pages/CheckoutSuccess'; // Import CheckoutSuccess
 import CheckoutCancel from './pages/CheckoutCancel'; // Import CheckoutCancel component
 import StripeDebug from './components/StripeDebug'; // Import StripeDebug component
 import AdminDashboard from './pages/AdminDashboard'; // Import AdminDashboard component
+import RoleSelector from './pages/RoleSelector'; // Import RoleSelector component
+import CustomerRegister from './pages/CustomerRegister'; // Import CustomerRegister component
+import ShopRegister from './pages/ShopRegister'; // Import ShopRegister component
+import ShopProfile from './pages/ShopProfile'; // Import ShopProfile component
+import ShopDashboard from './pages/ShopDashboard'; // Import ShopDashboard component
+import SubscriptionManagement from './pages/SubscriptionManagement'; // Import SubscriptionManagement component
+import AdDashboard from './pages/AdDashboard'; // Import AdDashboard component
 import { CartProvider } from './context/CartContext'; // Import CartProvider
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
-import ProtectedAdminRoute from './components/ProtectedAdminRoute'; // Import ProtectedAdminRoute
+import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
 import AddToHomeScreenPrompt from './components/AddToHomeScreenPrompt'; // Import AddToHomeScreenPrompt
 import "leaflet/dist/leaflet.css";
 
@@ -126,20 +133,50 @@ const App = () => {
               <Route path="/shops-map" element={<ShopsMap />} />
               <Route path="/quotes" element={<QuoteBidding />} />
               <Route path="/quote-bidding" element={<QuoteBidding />} />
-              <Route path="/dashboard" element={<MyGarage />} />
-              <Route path="/my-garage" element={<MyGarage />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/register" element={<Register />} /> {/* Add Register route */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute allowedRoles={['customer']}>
+                  <MyGarage />
+                </ProtectedRoute>
+              } />
+              <Route path="/my-garage" element={
+                <ProtectedRoute allowedRoles={['customer']}>
+                  <MyGarage />
+                </ProtectedRoute>
+              } />
+              <Route path="/cart" element={
+                <ProtectedRoute allowedRoles={['customer']}>
+                  <Cart />
+                </ProtectedRoute>
+              } />
+              <Route path="/register" element={<RoleSelector />} /> {/* Role selector for registration */}
+              <Route path="/register/customer" element={<CustomerRegister />} /> {/* Customer registration */}
+              <Route path="/register/shop" element={<ShopRegister />} /> {/* Shop registration */}
               <Route path="/login" element={<Login />} /> {/* Add Login route */}
+              <Route path="/shop/:shopId" element={<ShopProfile />} /> {/* Public shop profile */}
+              <Route path="/shop-dashboard" element={
+                <ProtectedRoute allowedRoles={['shop']}>
+                  <ShopDashboard />
+                </ProtectedRoute>
+              } /> {/* Shop owner dashboard - Shop only */}
+              <Route path="/subscription" element={
+                <ProtectedRoute allowedRoles={['shop']}>
+                  <SubscriptionManagement />
+                </ProtectedRoute>
+              } /> {/* Subscription management - Shop only */}
+              <Route path="/ads" element={
+                <ProtectedRoute allowedRoles={['shop']}>
+                  <AdDashboard />
+                </ProtectedRoute>
+              } /> {/* Advertising dashboard - Shop only */}
               <Route path="/checkout" element={<Checkout />} /> {/* Add Checkout route */}
               <Route path="/checkout/success" element={<CheckoutSuccess />} /> {/* Add Checkout Success route */}
               <Route path="/checkout/cancel" element={<CheckoutCancel />} /> {/* Add Checkout Cancel route */}
               <Route path="/stripe-debug" element={<StripeDebug />} /> {/* Add Stripe Debug route */}
               <Route path="/admin" element={
-                <ProtectedAdminRoute>
+                <ProtectedRoute allowedRoles={['admin']}>
                   <AdminDashboard />
-                </ProtectedAdminRoute>
-              } /> {/* Add Protected Admin Dashboard route */}
+                </ProtectedRoute>
+              } /> {/* Admin Dashboard - Admin only */}
               <Route path="*" element={<NotFound />} />
               </Routes>
             </CartProvider>

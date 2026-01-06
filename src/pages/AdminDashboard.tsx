@@ -151,11 +151,13 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
-            <TabsTrigger value="featured">Featured Deals</TabsTrigger>
-            <TabsTrigger value="vehicles">Vehicle Data</TabsTrigger>
+            <TabsTrigger value="moderation">Moderation</TabsTrigger>
+            <TabsTrigger value="disputes">Disputes</TabsTrigger>
+            <TabsTrigger value="payouts">Payouts</TabsTrigger>
+            <TabsTrigger value="featured">Featured</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -375,6 +377,388 @@ export default function AdminDashboard() {
                   ))}
                 </TableBody>
               </Table>
+            </Card>
+          </TabsContent>
+
+          {/* Moderation Tab */}
+          <TabsContent value="moderation" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Content Moderation</h2>
+              <div className="flex gap-2">
+                <Button variant="outline">Bulk Approve</Button>
+                <Button variant="outline">Bulk Reject</Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Shop Approvals */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                    Shop Approvals
+                  </CardTitle>
+                  <CardDescription>Review new shop registrations</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-medium">QuickFix Auto Service</h4>
+                          <p className="text-sm text-gray-600">Springfield, IL • 2 days ago</p>
+                        </div>
+                        <Badge variant="secondary">Pending</Badge>
+                      </div>
+                      <p className="text-sm mb-3">Full-service auto repair shop specializing in domestic vehicles.</p>
+                      <div className="flex gap-2">
+                        <Button size="sm">Approve</Button>
+                        <Button size="sm" variant="outline">Reject</Button>
+                        <Button size="sm" variant="ghost">Review</Button>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-medium">Elite Auto Care</h4>
+                          <p className="text-sm text-gray-600">Chicago, IL • 1 day ago</p>
+                        </div>
+                        <Badge variant="secondary">Pending</Badge>
+                      </div>
+                      <p className="text-sm mb-3">Luxury vehicle specialist with certified technicians.</p>
+                      <div className="flex gap-2">
+                        <Button size="sm">Approve</Button>
+                        <Button size="sm" variant="outline">Reject</Button>
+                        <Button size="sm" variant="ghost">Review</Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Content Reviews */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-purple-600" />
+                    Content Reviews
+                  </CardTitle>
+                  <CardDescription>Review user-generated content</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-medium">Review by John D.</h4>
+                          <p className="text-sm text-gray-600">QuickFix Auto Service • 3 hours ago</p>
+                        </div>
+                        <Badge variant="destructive">Flagged</Badge>
+                      </div>
+                      <p className="text-sm mb-3">"This shop is terrible! They overcharged me and the work was shoddy..."</p>
+                      <div className="flex gap-2">
+                        <Button size="sm">Approve</Button>
+                        <Button size="sm" variant="outline">Hide</Button>
+                        <Button size="sm" variant="ghost">Edit</Button>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-medium">Shop Photo Upload</h4>
+                          <p className="text-sm text-gray-600">Mike's Garage • 5 hours ago</p>
+                        </div>
+                        <Badge variant="secondary">Pending</Badge>
+                      </div>
+                      <p className="text-sm mb-3">New shop photos for portfolio</p>
+                      <div className="flex gap-2">
+                        <Button size="sm">Approve</Button>
+                        <Button size="sm" variant="outline">Reject</Button>
+                        <Button size="sm" variant="ghost">View</Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Moderation Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Moderation Statistics</CardTitle>
+                <CardDescription>Weekly moderation activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-600">23</p>
+                    <p className="text-sm text-gray-600">Approved</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-red-600">5</p>
+                    <p className="text-sm text-gray-600">Rejected</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-yellow-600">12</p>
+                    <p className="text-sm text-gray-600">Pending</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-blue-600">8</p>
+                    <p className="text-sm text-gray-600">Flagged</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Disputes Tab */}
+          <TabsContent value="disputes" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Dispute Resolution</h2>
+              <Button>Resolve Selected</Button>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Dispute ID</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Parties</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow>
+                      <TableCell className="font-medium">#DSP-001</TableCell>
+                      <TableCell>Service Quality</TableCell>
+                      <TableCell>John D. vs QuickFix Auto</TableCell>
+                      <TableCell>$245.99</TableCell>
+                      <TableCell><Badge variant="destructive">Open</Badge></TableCell>
+                      <TableCell>2024-01-12</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="ghost">Review</Button>
+                          <Button size="sm" variant="ghost">Mediate</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">#DSP-002</TableCell>
+                      <TableCell>Payment Issue</TableCell>
+                      <TableCell>Sarah M. vs Elite Auto</TableCell>
+                      <TableCell>$89.50</TableCell>
+                      <TableCell><Badge className="bg-yellow-100 text-yellow-800">In Review</Badge></TableCell>
+                      <TableCell>2024-01-10</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="ghost">Review</Button>
+                          <Button size="sm" variant="ghost">Mediate</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell className="font-medium">#DSP-003</TableCell>
+                      <TableCell>Refund Request</TableCell>
+                      <TableCell>Mike R. vs Downtown Repair</TableCell>
+                      <TableCell>$156.00</TableCell>
+                      <TableCell><Badge className="bg-green-100 text-green-800">Resolved</Badge></TableCell>
+                      <TableCell>2024-01-08</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="ghost">View</Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Dispute Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Dispute Details - #DSP-001</CardTitle>
+                <CardDescription>Service quality dispute between customer and shop</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Customer Statement</h4>
+                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                      "The brake pads were installed incorrectly and started making noise after 2 days.
+                      The shop refuses to fix it properly and won't refund my money."
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Shop Response</h4>
+                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                      "We installed the parts correctly according to specifications. The noise might be
+                      due to normal break-in period. We offered to inspect but customer declined."
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">Evidence</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Receipt</div>
+                    <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Photos</div>
+                    <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Work Order</div>
+                    <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Messages</div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button>Refund Customer</Button>
+                  <Button variant="outline">Require Shop Fix</Button>
+                  <Button variant="outline">Escalate</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Payouts Tab */}
+          <TabsContent value="payouts" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Payout Management</h2>
+              <Button>Process Payouts</Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Payout Stats */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-8 w-8 text-green-600" />
+                    <div>
+                      <p className="text-2xl font-bold">$12,450</p>
+                      <p className="text-sm text-gray-600">Pending Payouts</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <p className="text-2xl font-bold">$45,230</p>
+                      <p className="text-sm text-gray-600">Processed This Month</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="h-8 w-8 text-purple-600" />
+                    <div>
+                      <p className="text-2xl font-bold">2.3%</p>
+                      <p className="text-sm text-gray-600">Platform Fee</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Payout Queue */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Payouts</CardTitle>
+                <CardDescription>Shops awaiting payment for completed services</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">QuickFix Auto Service</h4>
+                      <p className="text-sm text-gray-600">3 completed jobs • $892.50 total</p>
+                      <p className="text-xs text-gray-500">Due: Jan 15, 2024</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                      <Button size="sm">Process</Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">Elite Auto Care</h4>
+                      <p className="text-sm text-gray-600">5 completed jobs • $1,245.00 total</p>
+                      <p className="text-xs text-gray-500">Due: Jan 15, 2024</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                      <Button size="sm">Process</Button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">Mike's Garage</h4>
+                      <p className="text-sm text-gray-600">2 completed jobs • $456.75 total</p>
+                      <p className="text-xs text-gray-500">Due: Jan 15, 2024</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className="bg-green-100 text-green-800">Processing</Badge>
+                      <Button size="sm" disabled>Processing</Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Payout History */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Payout History</CardTitle>
+                <CardDescription>Recent completed payouts</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium">QuickFix Auto Service</p>
+                      <p className="text-sm text-gray-600">Jan 1, 2024</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">$756.23</p>
+                      <Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium">Elite Auto Care</p>
+                      <p className="text-sm text-gray-600">Jan 1, 2024</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">$1,123.45</p>
+                      <Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between py-2 border-b">
+                    <div>
+                      <p className="font-medium">Downtown Repair</p>
+                      <p className="text-sm text-gray-600">Dec 25, 2023</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">$892.10</p>
+                      <Badge className="bg-green-100 text-green-800 text-xs">Completed</Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
 

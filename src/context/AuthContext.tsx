@@ -3,8 +3,10 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface User {
   id: string;
   email: string;
-  role: 'user' | 'admin';
+  role: 'customer' | 'shop' | 'admin';
   name?: string;
+  businessName?: string;
+  isVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -14,6 +16,9 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isCustomer: boolean;
+  isShop: boolean;
+  isShopOwner: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,7 +78,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     isAuthenticated: !!token && !!user,
-    isAdmin: user?.role === 'admin'
+    isAdmin: user?.role === 'admin',
+    isCustomer: user?.role === 'customer',
+    isShop: user?.role === 'shop',
+    isShopOwner: user?.role === 'shop'
   };
 
   return (
