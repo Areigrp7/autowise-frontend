@@ -24,7 +24,13 @@ import {
   DollarSign,
   TrendingUp,
   Users,
-  Settings
+  Settings,
+  UserCheck,
+  AlertCircle,
+  FileText,
+  Clock,
+  Shield,
+  Building
 } from 'lucide-react';
 
 interface Product {
@@ -60,6 +66,40 @@ interface VehicleModel {
   makeId: string;
   name: string;
   isActive: boolean;
+}
+
+interface OnboardingRequest {
+  id: string;
+  businessName: string;
+  ownerName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  businessType: string;
+  yearsInBusiness: string;
+  licenseNumber: string;
+  ein: string;
+  description: string;
+  documents: string[];
+  status: 'pending' | 'under_review' | 'approved' | 'rejected';
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewerNotes?: string;
+}
+
+interface ApprovalItem {
+  id: string;
+  type: 'shop_onboarding' | 'content_review' | 'payout_request' | 'dispute_resolution';
+  title: string;
+  description: string;
+  requester: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'in_review' | 'approved' | 'rejected';
+  submittedAt: string;
+  dueDate?: string;
 }
 
 export default function AdminDashboard() {
@@ -121,6 +161,104 @@ export default function AdminDashboard() {
     { id: '4', makeId: '2', name: 'Accord', isActive: true }
   ]);
 
+  // Mock data for onboarding requests
+  const [onboardingRequests, setOnboardingRequests] = useState<OnboardingRequest[]>([
+    {
+      id: '1',
+      businessName: 'QuickFix Auto Service',
+      ownerName: 'John Smith',
+      email: 'john@quickfixauto.com',
+      phone: '(555) 123-4567',
+      address: '123 Main St',
+      city: 'Springfield',
+      state: 'IL',
+      zipCode: '62701',
+      businessType: 'Auto Repair Shop',
+      yearsInBusiness: '5',
+      licenseNumber: 'AR-12345',
+      ein: '12-3456789',
+      description: 'Full-service auto repair shop specializing in domestic vehicles with ASE certified technicians.',
+      documents: ['business_license.pdf', 'insurance.pdf', 'tax_id.pdf'],
+      status: 'pending',
+      submittedAt: '2024-01-12'
+    },
+    {
+      id: '2',
+      businessName: 'Elite Auto Care',
+      ownerName: 'Sarah Johnson',
+      email: 'sarah@eliteautocare.com',
+      phone: '(555) 987-6543',
+      address: '456 Oak Ave',
+      city: 'Chicago',
+      state: 'IL',
+      zipCode: '60601',
+      businessType: 'Luxury Vehicle Specialist',
+      yearsInBusiness: '8',
+      licenseNumber: 'AR-67890',
+      ein: '98-7654321',
+      description: 'Luxury vehicle specialist with certified technicians and state-of-the-art equipment.',
+      documents: ['business_license.pdf', 'insurance.pdf', 'certifications.pdf'],
+      status: 'under_review',
+      submittedAt: '2024-01-10'
+    },
+    {
+      id: '3',
+      businessName: "Mike's Garage",
+      ownerName: 'Mike Rodriguez',
+      email: 'mike@mikesgarage.com',
+      phone: '(555) 456-7890',
+      address: '789 Industrial Blvd',
+      city: 'Detroit',
+      state: 'MI',
+      zipCode: '48201',
+      businessType: 'General Auto Repair',
+      yearsInBusiness: '12',
+      licenseNumber: 'AR-54321',
+      ein: '54-3210987',
+      description: 'Family-owned auto repair shop serving the community for over a decade.',
+      documents: ['business_license.pdf', 'insurance.pdf'],
+      status: 'approved',
+      submittedAt: '2024-01-08',
+      reviewedAt: '2024-01-09',
+      reviewerNotes: 'All documents verified. Business license and insurance are valid.'
+    }
+  ]);
+
+  // Mock data for approval items
+  const [approvalItems, setApprovalItems] = useState<ApprovalItem[]>([
+    {
+      id: '1',
+      type: 'shop_onboarding',
+      title: 'QuickFix Auto Service Registration',
+      description: 'New auto repair shop registration requiring document verification',
+      requester: 'John Smith',
+      priority: 'high',
+      status: 'pending',
+      submittedAt: '2024-01-12'
+    },
+    {
+      id: '2',
+      type: 'content_review',
+      title: 'Shop Photo Upload Review',
+      description: 'Mike\'s Garage uploaded new portfolio photos for review',
+      requester: 'Mike Rodriguez',
+      priority: 'medium',
+      status: 'in_review',
+      submittedAt: '2024-01-11'
+    },
+    {
+      id: '3',
+      type: 'payout_request',
+      title: 'Weekly Payout Processing',
+      description: 'Process weekly payouts for completed services ($2,450)',
+      requester: 'System',
+      priority: 'urgent',
+      status: 'pending',
+      submittedAt: '2024-01-12',
+      dueDate: '2024-01-15'
+    }
+  ]);
+
   // Stats for overview
   const stats = {
     totalProducts: products.length,
@@ -128,7 +266,12 @@ export default function AdminDashboard() {
     totalRevenue: products.reduce((sum, p) => sum + (p.salePrice || p.price), 0),
     activeYears: vehicleYears.filter(y => y.isActive).length,
     activeMakes: vehicleMakes.filter(m => m.isActive).length,
-    activeModels: vehicleModels.filter(m => m.isActive).length
+    activeModels: vehicleModels.filter(m => m.isActive).length,
+    pendingOnboarding: onboardingRequests.filter(r => r.status === 'pending').length,
+    totalOnboarding: onboardingRequests.length,
+    approvedShops: onboardingRequests.filter(r => r.status === 'approved').length,
+    pendingApprovals: approvalItems.filter(a => a.status === 'pending').length,
+    urgentApprovals: approvalItems.filter(a => a.priority === 'urgent').length
   };
 
   const handleToggleFeatured = (productId: string) => {
@@ -141,6 +284,26 @@ export default function AdminDashboard() {
     setProducts(products.filter(p => p.id !== productId));
   };
 
+  const handleApproveOnboarding = (requestId: string) => {
+    setOnboardingRequests(requests =>
+      requests.map(request =>
+        request.id === requestId
+          ? { ...request, status: 'approved' as const, reviewedAt: new Date().toISOString().split('T')[0], reviewerNotes: 'Application approved after document verification.' }
+          : request
+      )
+    );
+  };
+
+  const handleRejectOnboarding = (requestId: string) => {
+    setOnboardingRequests(requests =>
+      requests.map(request =>
+        request.id === requestId
+          ? { ...request, status: 'rejected' as const, reviewedAt: new Date().toISOString().split('T')[0], reviewerNotes: 'Application rejected due to incomplete documentation.' }
+          : request
+      )
+    );
+  };
+
   return (
     <Layout currentPage="admin">
       <div className="container mx-auto px-4 py-6">
@@ -151,13 +314,14 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+            <TabsTrigger value="approvals">Approvals</TabsTrigger>
             <TabsTrigger value="moderation">Moderation</TabsTrigger>
             <TabsTrigger value="disputes">Disputes</TabsTrigger>
             <TabsTrigger value="payouts">Payouts</TabsTrigger>
-            <TabsTrigger value="featured">Featured</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
@@ -235,40 +399,430 @@ export default function AdminDashboard() {
                   </div>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <Building className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <p className="text-2xl font-bold">{stats.pendingOnboarding}</p>
+                      <p className="text-sm text-gray-600">Pending Onboarding</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <UserCheck className="h-8 w-8 text-green-600" />
+                    <div>
+                      <p className="text-2xl font-bold">{stats.approvedShops}</p>
+                      <p className="text-sm text-gray-600">Approved Shops</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="h-8 w-8 text-orange-600" />
+                    <div>
+                      <p className="text-2xl font-bold">{stats.pendingApprovals}</p>
+                      <p className="text-sm text-gray-600">Pending Approvals</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Recent Activity */}
             <Card>
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>Latest updates to your catalog</CardDescription>
+                <CardDescription>Latest platform activities and updates</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 p-3 border rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <Building className="h-5 w-5 text-blue-500" />
                     <div>
-                      <p className="font-medium">New product added: Brake Pads Set</p>
+                      <p className="font-medium">New shop application: QuickFix Auto Service</p>
                       <p className="text-sm text-gray-600">2 hours ago</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 border rounded-lg">
-                    <Star className="h-5 w-5 text-yellow-500" />
+                    <CheckCircle className="h-5 w-5 text-green-500" />
                     <div>
-                      <p className="font-medium">Product marked as featured: Oil Filter</p>
+                      <p className="font-medium">Shop approved: Elite Auto Care</p>
                       <p className="text-sm text-gray-600">4 hours ago</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 border rounded-lg">
-                    <Car className="h-5 w-5 text-blue-500" />
+                    <DollarSign className="h-5 w-5 text-green-500" />
                     <div>
-                      <p className="font-medium">New vehicle model added: Toyota RAV4</p>
+                      <p className="font-medium">Payout processed: $2,450 to 3 shops</p>
+                      <p className="text-sm text-gray-600">6 hours ago</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 border rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-orange-500" />
+                    <div>
+                      <p className="font-medium">New dispute filed: Service quality issue</p>
+                      <p className="text-sm text-gray-600">1 day ago</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 border rounded-lg">
+                    <FileText className="h-5 w-5 text-purple-500" />
+                    <div>
+                      <p className="font-medium">Content flagged: Inappropriate review</p>
                       <p className="text-sm text-gray-600">1 day ago</p>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Onboarding Tab */}
+          <TabsContent value="onboarding" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Shop/Mechanic Onboarding Requests</h2>
+              <div className="flex gap-2">
+                <Button variant="outline">Bulk Actions</Button>
+                <Button variant="outline">Export List</Button>
+              </div>
+            </div>
+
+            {/* Onboarding Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-6 w-6 text-yellow-600" />
+                    <div>
+                      <p className="text-xl font-bold">{stats.pendingOnboarding}</p>
+                      <p className="text-sm text-gray-600">Pending Review</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Eye className="h-6 w-6 text-blue-600" />
+                    <div>
+                      <p className="text-xl font-bold">{onboardingRequests.filter(r => r.status === 'under_review').length}</p>
+                      <p className="text-sm text-gray-600">Under Review</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <div>
+                      <p className="text-xl font-bold">{stats.approvedShops}</p>
+                      <p className="text-sm text-gray-600">Approved</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <XCircle className="h-6 w-6 text-red-600" />
+                    <div>
+                      <p className="text-xl font-bold">{onboardingRequests.filter(r => r.status === 'rejected').length}</p>
+                      <p className="text-sm text-gray-600">Rejected</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Onboarding Requests Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Registration Requests</CardTitle>
+                <CardDescription>Review and approve new shop/mechanic registrations</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Business Name</TableHead>
+                      <TableHead>Owner</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {onboardingRequests.map(request => (
+                      <TableRow key={request.id}>
+                        <TableCell className="font-medium">{request.businessName}</TableCell>
+                        <TableCell>{request.ownerName}</TableCell>
+                        <TableCell>{request.city}, {request.state}</TableCell>
+                        <TableCell>{request.businessType}</TableCell>
+                        <TableCell>{new Date(request.submittedAt).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              request.status === 'approved' ? 'default' :
+                              request.status === 'rejected' ? 'destructive' :
+                              request.status === 'under_review' ? 'secondary' : 'outline'
+                            }
+                          >
+                            {request.status.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle>Review Application: {request.businessName}</DialogTitle>
+                                  <DialogDescription>Detailed review of shop registration application</DialogDescription>
+                                </DialogHeader>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
+                                  <div className="space-y-4">
+                                    <div>
+                                      <h4 className="font-medium mb-2">Business Information</h4>
+                                      <div className="space-y-2 text-sm">
+                                        <p><strong>Business Name:</strong> {request.businessName}</p>
+                                        <p><strong>Owner:</strong> {request.ownerName}</p>
+                                        <p><strong>Email:</strong> {request.email}</p>
+                                        <p><strong>Phone:</strong> {request.phone}</p>
+                                        <p><strong>Address:</strong> {request.address}, {request.city}, {request.state} {request.zipCode}</p>
+                                        <p><strong>Business Type:</strong> {request.businessType}</p>
+                                        <p><strong>Years in Business:</strong> {request.yearsInBusiness}</p>
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <h4 className="font-medium mb-2">Licensing & Documentation</h4>
+                                      <div className="space-y-2 text-sm">
+                                        <p><strong>License Number:</strong> {request.licenseNumber}</p>
+                                        <p><strong>EIN:</strong> {request.ein}</p>
+                                        <p><strong>Documents:</strong></p>
+                                        <ul className="list-disc list-inside ml-4">
+                                          {request.documents.map((doc, index) => (
+                                            <li key={index} className="text-blue-600 hover:underline cursor-pointer">{doc}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-4">
+                                    <div>
+                                      <h4 className="font-medium mb-2">Business Description</h4>
+                                      <p className="text-sm bg-gray-50 p-3 rounded">{request.description}</p>
+                                    </div>
+
+                                    {request.reviewerNotes && (
+                                      <div>
+                                        <h4 className="font-medium mb-2">Reviewer Notes</h4>
+                                        <p className="text-sm bg-blue-50 p-3 rounded">{request.reviewerNotes}</p>
+                                      </div>
+                                    )}
+
+                                    <div>
+                                      <h4 className="font-medium mb-2">Application Status</h4>
+                                      <div className="flex items-center gap-2">
+                                        <Badge
+                                          variant={
+                                            request.status === 'approved' ? 'default' :
+                                            request.status === 'rejected' ? 'destructive' :
+                                            request.status === 'under_review' ? 'secondary' : 'outline'
+                                          }
+                                        >
+                                          {request.status.replace('_', ' ').toUpperCase()}
+                                        </Badge>
+                                        {request.reviewedAt && (
+                                          <span className="text-xs text-gray-500">
+                                            Reviewed: {new Date(request.reviewedAt).toLocaleDateString()}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {request.status === 'pending' && (
+                                  <div className="flex gap-3 pt-4 border-t">
+                                    <Button
+                                      onClick={() => handleApproveOnboarding(request.id)}
+                                      className="flex-1"
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Approve Application
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      onClick={() => handleRejectOnboarding(request.id)}
+                                      className="flex-1"
+                                    >
+                                      <XCircle className="h-4 w-4 mr-2" />
+                                      Reject Application
+                                    </Button>
+                                    <Button variant="secondary" className="flex-1">
+                                      Request More Info
+                                    </Button>
+                                  </div>
+                                )}
+                              </DialogContent>
+                            </Dialog>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Approvals Tab */}
+          <TabsContent value="approvals" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Approval Workflow</h2>
+              <div className="flex gap-2">
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="shop_onboarding">Shop Onboarding</SelectItem>
+                    <SelectItem value="content_review">Content Review</SelectItem>
+                    <SelectItem value="payout_request">Payout Request</SelectItem>
+                    <SelectItem value="dispute_resolution">Dispute Resolution</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button>Process Selected</Button>
+              </div>
+            </div>
+
+            {/* Approval Queue */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Approvals</CardTitle>
+                <CardDescription>Items requiring your attention and approval</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {approvalItems.map(item => (
+                    <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-2 rounded-full ${
+                          item.priority === 'urgent' ? 'bg-red-100' :
+                          item.priority === 'high' ? 'bg-orange-100' :
+                          item.priority === 'medium' ? 'bg-yellow-100' : 'bg-blue-100'
+                        }`}>
+                          {item.type === 'shop_onboarding' && <Building className="h-5 w-5 text-blue-600" />}
+                          {item.type === 'content_review' && <FileText className="h-5 w-5 text-purple-600" />}
+                          {item.type === 'payout_request' && <DollarSign className="h-5 w-5 text-green-600" />}
+                          {item.type === 'dispute_resolution' && <AlertCircle className="h-5 w-5 text-red-600" />}
+                        </div>
+                        <div>
+                          <h4 className="font-medium">{item.title}</h4>
+                          <p className="text-sm text-gray-600">{item.description}</p>
+                          <div className="flex items-center gap-4 mt-2">
+                            <span className="text-xs text-gray-500">By: {item.requester}</span>
+                            <span className="text-xs text-gray-500">Submitted: {new Date(item.submittedAt).toLocaleDateString()}</span>
+                            {item.dueDate && (
+                              <span className="text-xs text-red-600">Due: {new Date(item.dueDate).toLocaleDateString()}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge
+                          variant={
+                            item.priority === 'urgent' ? 'destructive' :
+                            item.priority === 'high' ? 'default' :
+                            item.priority === 'medium' ? 'secondary' : 'outline'
+                          }
+                        >
+                          {item.priority.toUpperCase()}
+                        </Badge>
+                        <Badge variant="outline">{item.status.replace('_', ' ')}</Badge>
+                        <Button size="sm">Review</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Approval Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-6 w-6 text-yellow-600" />
+                    <div>
+                      <p className="text-xl font-bold">{stats.pendingApprovals}</p>
+                      <p className="text-sm text-gray-600">Pending</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Eye className="h-6 w-6 text-blue-600" />
+                    <div>
+                      <p className="text-xl font-bold">{approvalItems.filter(a => a.status === 'in_review').length}</p>
+                      <p className="text-sm text-gray-600">In Review</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-6 w-6 text-green-600" />
+                    <div>
+                      <p className="text-xl font-bold">{approvalItems.filter(a => a.status === 'approved').length}</p>
+                      <p className="text-sm text-gray-600">Approved</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="h-6 w-6 text-red-600" />
+                    <div>
+                      <p className="text-xl font-bold">{stats.urgentApprovals}</p>
+                      <p className="text-sm text-gray-600">Urgent</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Products Tab */}
@@ -385,66 +939,31 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Content Moderation</h2>
               <div className="flex gap-2">
-                <Button variant="outline">Bulk Approve</Button>
-                <Button variant="outline">Bulk Reject</Button>
+                <Select defaultValue="all">
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Content</SelectItem>
+                    <SelectItem value="reviews">Reviews</SelectItem>
+                    <SelectItem value="photos">Photos</SelectItem>
+                    <SelectItem value="posts">Posts</SelectItem>
+                    <SelectItem value="comments">Comments</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="outline">Bulk Actions</Button>
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Shop Approvals */}
+              {/* Reviews Moderation */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-blue-600" />
-                    Shop Approvals
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    Review Moderation
                   </CardTitle>
-                  <CardDescription>Review new shop registrations</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="font-medium">QuickFix Auto Service</h4>
-                          <p className="text-sm text-gray-600">Springfield, IL • 2 days ago</p>
-                        </div>
-                        <Badge variant="secondary">Pending</Badge>
-                      </div>
-                      <p className="text-sm mb-3">Full-service auto repair shop specializing in domestic vehicles.</p>
-                      <div className="flex gap-2">
-                        <Button size="sm">Approve</Button>
-                        <Button size="sm" variant="outline">Reject</Button>
-                        <Button size="sm" variant="ghost">Review</Button>
-                      </div>
-                    </div>
-
-                    <div className="p-4 border rounded-lg">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h4 className="font-medium">Elite Auto Care</h4>
-                          <p className="text-sm text-gray-600">Chicago, IL • 1 day ago</p>
-                        </div>
-                        <Badge variant="secondary">Pending</Badge>
-                      </div>
-                      <p className="text-sm mb-3">Luxury vehicle specialist with certified technicians.</p>
-                      <div className="flex gap-2">
-                        <Button size="sm">Approve</Button>
-                        <Button size="sm" variant="outline">Reject</Button>
-                        <Button size="sm" variant="ghost">Review</Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Content Reviews */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="h-5 w-5 text-purple-600" />
-                    Content Reviews
-                  </CardTitle>
-                  <CardDescription>Review user-generated content</CardDescription>
+                  <CardDescription>Review customer reviews and feedback</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -467,16 +986,73 @@ export default function AdminDashboard() {
                     <div className="p-4 border rounded-lg">
                       <div className="flex items-start justify-between mb-2">
                         <div>
+                          <h4 className="font-medium">Review by Sarah M.</h4>
+                          <p className="text-sm text-gray-600">Elite Auto Care • 1 hour ago</p>
+                        </div>
+                        <Badge variant="secondary">Pending</Badge>
+                      </div>
+                      <p className="text-sm mb-3">"Excellent service! They fixed my car quickly and professionally."</p>
+                      <div className="flex gap-2">
+                        <Button size="sm">Approve</Button>
+                        <Button size="sm" variant="outline">Flag</Button>
+                        <Button size="sm" variant="ghost">Edit</Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Media Content Moderation */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Eye className="h-5 w-5 text-purple-600" />
+                    Media Content Review
+                  </CardTitle>
+                  <CardDescription>Review photos, videos, and other media uploads</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
                           <h4 className="font-medium">Shop Photo Upload</h4>
                           <p className="text-sm text-gray-600">Mike's Garage • 5 hours ago</p>
                         </div>
                         <Badge variant="secondary">Pending</Badge>
                       </div>
-                      <p className="text-sm mb-3">New shop photos for portfolio</p>
+                      <p className="text-sm mb-3">New shop photos for portfolio - 5 images uploaded</p>
+                      <div className="grid grid-cols-5 gap-1 mb-3">
+                        <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Img1</div>
+                        <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Img2</div>
+                        <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Img3</div>
+                        <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Img4</div>
+                        <div className="aspect-square bg-gray-200 rounded flex items-center justify-center text-xs">Img5</div>
+                      </div>
                       <div className="flex gap-2">
                         <Button size="sm">Approve</Button>
                         <Button size="sm" variant="outline">Reject</Button>
-                        <Button size="sm" variant="ghost">View</Button>
+                        <Button size="sm" variant="ghost">View All</Button>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h4 className="font-medium">Before/After Photos</h4>
+                          <p className="text-sm text-gray-600">Downtown Repair • 2 hours ago</p>
+                        </div>
+                        <Badge variant="destructive">Flagged</Badge>
+                      </div>
+                      <p className="text-sm mb-3">Work completion photos - potential quality concerns</p>
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        <div className="aspect-video bg-gray-200 rounded flex items-center justify-center text-xs">Before</div>
+                        <div className="aspect-video bg-gray-200 rounded flex items-center justify-center text-xs">After</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm">Approve</Button>
+                        <Button size="sm" variant="outline">Request Revision</Button>
+                        <Button size="sm" variant="ghost">View Details</Button>
                       </div>
                     </div>
                   </div>
