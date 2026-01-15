@@ -129,4 +129,44 @@ export const getActiveQuoteRequests = async (): Promise<any> => {
   return makeApiRequest('get', '/quote_requests/active');
 };
 
+// Product API functions
+export interface ProductData {
+  name: string;
+  brand: string;
+  price: number | string;
+  original_price?: number | string;
+  rating?: number | string;
+  reviews?: number;
+  is_oem?: boolean;
+  seller?: string;
+  shipping?: string;
+  warranty?: string;
+  in_stock?: boolean;
+  image_url?: string;
+  best_value_score?: number | string;
+  features?: string[];
+  compatibility?: string[];
+  category?: string;
+}
+
+export const createProduct = async (productData: ProductData): Promise<any> => {
+  return makeApiRequest('post', '/parts', productData);
+};
+
+export const getProducts = async (): Promise<any> => {
+  return makeApiRequest('get', '/parts');
+};
+
+export const getProductById = async (productId: string): Promise<any> => {
+  return makeApiRequest('get', `/parts/${productId}`);
+};
+
+export const updateProduct = async (productId: string, productData: Partial<ProductData>): Promise<any> => {
+  return makeApiRequest('put', `/parts/${productId}`, productData);
+};
+
+export const deleteProduct = async (productId: string): Promise<any> => {
+  return makeApiRequest('delete', `/parts/${productId}`);
+};
+
 export default apiClient;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import Layout from '@/components/Layout';
+import { createProduct, getProducts, deleteProduct, ProductData } from '@/lib/apiClient';
+import { useToast } from '@/hooks/use-toast';
 import {
   Package,
   Star,
@@ -30,7 +32,8 @@ import {
   FileText,
   Clock,
   Shield,
-  Building
+  Building,
+  RefreshCw
 } from 'lucide-react';
 
 interface Product {
@@ -106,39 +109,55 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isCreateProductOpen, setIsCreateProductOpen] = useState(false);
   const [isCreateVehicleDataOpen, setIsCreateVehicleDataOpen] = useState(false);
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [productsError, setProductsError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  // Mock data - in real app this would come from API
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: '1',
-      name: 'Brake Pads Set',
-      brand: 'Brembo',
-      category: 'Brakes',
-      price: 129.99,
-      salePrice: 89.99,
-      description: 'High-performance brake pads with excellent stopping power',
-      image: '/api/placeholder/300/200',
-      inStock: true,
-      isFeatured: true,
-      compatibility: ['Toyota Camry', 'Honda Accord'],
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-15'
-    },
-    {
-      id: '2',
-      name: 'Oil Filter',
-      brand: 'Bosch',
-      category: 'Filters',
-      price: 24.99,
-      salePrice: 16.99,
-      description: 'Premium oil filter for maximum engine protection',
-      inStock: true,
-      isFeatured: false,
-      compatibility: ['Most vehicles'],
-      createdAt: '2024-01-02',
-      updatedAt: '2024-01-10'
-    }
-  ]);
+  // Product creation form state
+  const [productForm, setProductForm] = useState<ProductData>({
+    name: '',
+    brand: '',
+    price: 0,
+    original_price: undefined,
+    rating: undefined,
+    reviews: undefined,
+    is_oem: false,
+    seller: '',
+    shipping: '',
+    warranty: '',
+    in_stock: true,
+    image_url: '',
+    best_value_score: undefined,
+    features: [],
+    compatibility: [],
+    category: ''
+  });
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setIsLoadingProducts(true);
+      setProductsError(null);
+      try {
+        const response = await getProducts();
+        setProducts(response.data || response); // Handle both response.data and direct response formats
+      } catch (error: any) {
+        console.error('Error fetching products:', error);
+        setProductsError(error.message || 'Failed to fetch products');
+        toast({
+          title: "Error",
+          description: "Failed to load products. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    fetchProducts();
+  }, [toast]);
 
   const [vehicleYears, setVehicleYears] = useState<VehicleYear[]>([
     { id: '1', year: 2024, isActive: true },
@@ -262,8 +281,7 @@ export default function AdminDashboard() {
   // Stats for overview
   const stats = {
     totalProducts: products.length,
-    featuredProducts: products.filter(p => p.isFeatured).length,
-    totalRevenue: products.reduce((sum, p) => sum + (p.salePrice || p.price), 0),
+    totalRevenue: products.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0),
     activeYears: vehicleYears.filter(y => y.isActive).length,
     activeMakes: vehicleMakes.filter(m => m.isActive).length,
     activeModels: vehicleModels.filter(m => m.isActive).length,
@@ -280,8 +298,24 @@ export default function AdminDashboard() {
     ));
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    setProducts(products.filter(p => p.id !== productId));
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      await deleteProduct(productId);
+      // Refresh products list
+      const response = await getProducts();
+      setProducts(response.data || response);
+      toast({
+        title: "Success",
+        description: "Product deleted successfully!",
+      });
+    } catch (error: any) {
+      console.error('Error deleting product:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete product. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleApproveOnboarding = (requestId: string) => {
@@ -302,6 +336,63 @@ export default function AdminDashboard() {
           : request
       )
     );
+  };
+
+  const handleCreateProduct = async () => {
+    if (!productForm.name || !productForm.brand || productForm.price <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields (name, brand, and price).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingProduct(true);
+    try {
+      await createProduct(productForm);
+
+      // Reset form
+      setProductForm({
+        name: '',
+        brand: '',
+        price: 0,
+        original_price: undefined,
+        rating: undefined,
+        reviews: undefined,
+        is_oem: false,
+        seller: '',
+        shipping: '',
+        warranty: '',
+        in_stock: true,
+        image_url: '',
+        best_value_score: undefined,
+        features: [],
+        compatibility: [],
+        category: ''
+      });
+
+      setIsCreateProductOpen(false);
+
+      // Refresh products list
+      const response = await getProducts();
+      setProducts(response.data || response);
+
+      toast({
+        title: "Success",
+        description: "Product created successfully!",
+      });
+
+    } catch (error: any) {
+      console.error('Error creating product:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create product. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingProduct(false);
+    }
   };
 
   return (
@@ -577,8 +668,8 @@ export default function AdminDashboard() {
                           <Badge
                             variant={
                               request.status === 'approved' ? 'default' :
-                              request.status === 'rejected' ? 'destructive' :
-                              request.status === 'under_review' ? 'secondary' : 'outline'
+                                request.status === 'rejected' ? 'destructive' :
+                                  request.status === 'under_review' ? 'secondary' : 'outline'
                             }
                           >
                             {request.status.replace('_', ' ').toUpperCase()}
@@ -647,8 +738,8 @@ export default function AdminDashboard() {
                                         <Badge
                                           variant={
                                             request.status === 'approved' ? 'default' :
-                                            request.status === 'rejected' ? 'destructive' :
-                                            request.status === 'under_review' ? 'secondary' : 'outline'
+                                              request.status === 'rejected' ? 'destructive' :
+                                                request.status === 'under_review' ? 'secondary' : 'outline'
                                           }
                                         >
                                           {request.status.replace('_', ' ').toUpperCase()}
@@ -732,11 +823,10 @@ export default function AdminDashboard() {
                   {approvalItems.map(item => (
                     <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-start gap-4">
-                        <div className={`p-2 rounded-full ${
-                          item.priority === 'urgent' ? 'bg-red-100' :
-                          item.priority === 'high' ? 'bg-orange-100' :
-                          item.priority === 'medium' ? 'bg-yellow-100' : 'bg-blue-100'
-                        }`}>
+                        <div className={`p-2 rounded-full ${item.priority === 'urgent' ? 'bg-red-100' :
+                            item.priority === 'high' ? 'bg-orange-100' :
+                              item.priority === 'medium' ? 'bg-yellow-100' : 'bg-blue-100'
+                          }`}>
                           {item.type === 'shop_onboarding' && <Building className="h-5 w-5 text-blue-600" />}
                           {item.type === 'content_review' && <FileText className="h-5 w-5 text-purple-600" />}
                           {item.type === 'payout_request' && <DollarSign className="h-5 w-5 text-green-600" />}
@@ -758,8 +848,8 @@ export default function AdminDashboard() {
                         <Badge
                           variant={
                             item.priority === 'urgent' ? 'destructive' :
-                            item.priority === 'high' ? 'default' :
-                            item.priority === 'medium' ? 'secondary' : 'outline'
+                              item.priority === 'high' ? 'default' :
+                                item.priority === 'medium' ? 'secondary' : 'outline'
                           }
                         >
                           {item.priority.toUpperCase()}
@@ -829,108 +919,367 @@ export default function AdminDashboard() {
           <TabsContent value="products" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Product Management</h2>
-              <Dialog open={isCreateProductOpen} onOpenChange={setIsCreateProductOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Product
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Create New Product</DialogTitle>
-                    <DialogDescription>Add a new product to your catalog</DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="product-name" className="text-right">Name</Label>
-                      <Input id="product-name" className="col-span-3" placeholder="Product name" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="product-brand" className="text-right">Brand</Label>
-                      <Input id="product-brand" className="col-span-3" placeholder="Brand name" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="product-category" className="text-right">Category</Label>
-                      <Select>
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="brakes">Brakes</SelectItem>
-                          <SelectItem value="filters">Filters</SelectItem>
-                          <SelectItem value="engine">Engine</SelectItem>
-                          <SelectItem value="transmission">Transmission</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="product-price" className="text-right">Price</Label>
-                      <Input id="product-price" type="number" className="col-span-3" placeholder="0.00" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="product-description" className="text-right">Description</Label>
-                      <Textarea id="product-description" className="col-span-3" placeholder="Product description" />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsCreateProductOpen(false)}>Cancel</Button>
-                    <Button onClick={() => setIsCreateProductOpen(false)}>Create Product</Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Brand</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {products.map(product => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell>{product.brand}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell>
-                        {product.salePrice ? (
-                          <div>
-                            <span className="line-through text-gray-500">${product.price}</span>
-                            <span className="font-bold text-green-600 ml-2">${product.salePrice}</span>
-                          </div>
-                        ) : (
-                          <span>${product.price}</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={product.inStock ? "default" : "destructive"}>
-                          {product.inStock ? 'In Stock' : 'Out of Stock'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteProduct(product.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    setIsLoadingProducts(true);
+                    try {
+                      const response = await getProducts();
+                      setProducts(response.data || response);
+                      setProductsError(null);
+                    } catch (error: any) {
+                      setProductsError(error.message || 'Failed to refresh products');
+                    } finally {
+                      setIsLoadingProducts(false);
+                    }
+                  }}
+                  disabled={isLoadingProducts}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingProducts ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Dialog open={isCreateProductOpen} onOpenChange={setIsCreateProductOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Product
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Create New Product</DialogTitle>
+                      <DialogDescription>Add a new product to your catalog</DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-6 py-4">
+                      {/* Basic Information */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="product-name">Product Name *</Label>
+                          <Input
+                            id="product-name"
+                            value={productForm.name}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, name: e.target.value }))}
+                            placeholder="Premium Brake Pads - Front Set"
+                          />
                         </div>
-                      </TableCell>
+                        <div className="space-y-2">
+                          <Label htmlFor="product-brand">Brand *</Label>
+                          <Input
+                            id="product-brand"
+                            value={productForm.brand}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, brand: e.target.value }))}
+                            placeholder="Brembo"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="product-price">Price *</Label>
+                          <Input
+                            id="product-price"
+                            type="number"
+                            step="0.01"
+                            value={productForm.price || ''}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                            placeholder="89.99"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="product-original-price">Original Price</Label>
+                          <Input
+                            id="product-original-price"
+                            type="number"
+                            step="0.01"
+                            value={productForm.original_price || ''}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, original_price: parseFloat(e.target.value) || undefined }))}
+                            placeholder="129.99"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="product-category">Category</Label>
+                          <Select
+                            value={productForm.category}
+                            onValueChange={(value) => setProductForm(prev => ({ ...prev, category: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Brake System">Brake System</SelectItem>
+                              <SelectItem value="Engine Parts">Engine Parts</SelectItem>
+                              <SelectItem value="Filters">Filters</SelectItem>
+                              <SelectItem value="Transmission">Transmission</SelectItem>
+                              <SelectItem value="Suspension">Suspension</SelectItem>
+                              <SelectItem value="Electrical">Electrical</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Seller & Stock Information */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="product-seller">Seller</Label>
+                          <Input
+                            id="product-seller"
+                            value={productForm.seller}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, seller: e.target.value }))}
+                            placeholder="AutoZone"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="product-image-url">Image URL</Label>
+                          <Input
+                            id="product-image-url"
+                            value={productForm.image_url}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, image_url: e.target.value }))}
+                            placeholder="https://example.com/image.jpg"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Shipping & Warranty */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="product-shipping">Shipping</Label>
+                          <Input
+                            id="product-shipping"
+                            value={productForm.shipping}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, shipping: e.target.value }))}
+                            placeholder="Free 2-day shipping"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="product-warranty">Warranty</Label>
+                          <Input
+                            id="product-warranty"
+                            value={productForm.warranty}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, warranty: e.target.value }))}
+                            placeholder="3 years / 36,000 miles"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Ratings & Scores */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="product-rating">Rating</Label>
+                          <Input
+                            id="product-rating"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="5"
+                            value={productForm.rating || ''}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, rating: parseFloat(e.target.value) || undefined }))}
+                            placeholder="4.8"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="product-reviews">Reviews Count</Label>
+                          <Input
+                            id="product-reviews"
+                            type="number"
+                            value={productForm.reviews || ''}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, reviews: parseInt(e.target.value) || undefined }))}
+                            placeholder="1247"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="product-best-value">Best Value Score</Label>
+                          <Input
+                            id="product-best-value"
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            max="10"
+                            value={productForm.best_value_score || ''}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, best_value_score: parseFloat(e.target.value) || undefined }))}
+                            placeholder="9.2"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Checkboxes */}
+                      <div className="flex gap-6">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="is-oem"
+                            checked={productForm.is_oem || false}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, is_oem: e.target.checked }))}
+                            className="rounded"
+                          />
+                          <Label htmlFor="is-oem">OEM Part</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="in-stock"
+                            checked={productForm.in_stock || false}
+                            onChange={(e) => setProductForm(prev => ({ ...prev, in_stock: e.target.checked }))}
+                            className="rounded"
+                          />
+                          <Label htmlFor="in-stock">In Stock</Label>
+                        </div>
+                      </div>
+
+                      {/* Features */}
+                      <div className="space-y-2">
+                        <Label htmlFor="product-features">Features (one per line)</Label>
+                        <Textarea
+                          id="product-features"
+                          value={productForm.features?.join('\n') || ''}
+                          onChange={(e) => setProductForm(prev => ({
+                            ...prev,
+                            features: e.target.value.split('\n').filter(f => f.trim())
+                          }))}
+                          placeholder="Low dust formula&#10;Quiet operation&#10;High performance"
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Compatibility */}
+                      <div className="space-y-2">
+                        <Label htmlFor="product-compatibility">Compatibility (one per line)</Label>
+                        <Textarea
+                          id="product-compatibility"
+                          value={productForm.compatibility?.join('\n') || ''}
+                          onChange={(e) => setProductForm(prev => ({
+                            ...prev,
+                            compatibility: e.target.value.split('\n').filter(c => c.trim())
+                          }))}
+                          placeholder="2019-2024 Toyota Camry&#10;2020-2024 Honda Accord"
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setIsCreateProductOpen(false)} disabled={isCreatingProduct}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreateProduct} disabled={isCreatingProduct}>
+                        {isCreatingProduct ? 'Creating...' : 'Create Product'}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
+            <Card>
+              {isLoadingProducts ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p>Loading products...</p>
+                  </div>
+                </div>
+              ) : productsError ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="text-center">
+                    <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                    <p className="text-red-600 mb-2">Failed to load products</p>
+                    <p className="text-sm text-gray-500">{productsError}</p>
+                    <Button
+                      onClick={() => window.location.reload()}
+                      className="mt-4"
+                      variant="outline"
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Brand</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Rating</TableHead>
+                      <TableHead>Value Score</TableHead>
+                      <TableHead>Stock</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {products.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center py-8">
+                          <div className="text-gray-500">
+                            <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                            <p>No products found</p>
+                            <p className="text-sm">Start by adding your first product</p>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      products.map((product, index) => (
+                        <TableRow key={product.id || index}>
+                          <TableCell className="font-medium">{product.name}</TableCell>
+                          <TableCell>{product.brand}</TableCell>
+                          <TableCell>{product.category}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-semibold">${parseFloat(product.price).toFixed(2)}</span>
+                              {product.original_price && parseFloat(product.original_price) > parseFloat(product.price) && (
+                                <span className="text-sm text-gray-500 line-through">
+                                  ${parseFloat(product.original_price).toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {product.rating && (
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                <span className="text-sm">{parseFloat(product.rating).toFixed(1)}</span>
+                                {product.reviews && (
+                                  <span className="text-xs text-gray-500">({product.reviews})</span>
+                                )}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {product.best_value_score && (
+                              <div className="flex items-center gap-1">
+                                <TrendingUp className="h-4 w-4 text-green-600" />
+                                <span className="text-sm font-medium">{parseFloat(product.best_value_score).toFixed(1)}</span>
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={product.in_stock ? "default" : "destructive"}>
+                              {product.in_stock ? 'In Stock' : 'Out of Stock'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteProduct(product.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </Card>
           </TabsContent>
 
