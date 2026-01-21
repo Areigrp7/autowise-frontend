@@ -36,7 +36,7 @@ interface LayoutProps {
 export default function Layout({ children, currentPage }: LayoutProps) {
   const location = useLocation();
   const { getCartTotalQuantity } = useCart(); // Use the cart hook
-  const { isAuthenticated, isAdmin, logout } = useAuth(); // Use the auth hook
+  const { isAuthenticated, isAdmin, isMechanic, isMechanicOwner, logout, getUserDisplayName } = useAuth(); // Use the auth hook
   const cartQuantity = getCartTotalQuantity();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -132,6 +132,16 @@ export default function Layout({ children, currentPage }: LayoutProps) {
               >
                 My Garage
               </Link>
+              {isAuthenticated && (isMechanic || isMechanicOwner) && (
+                <Link
+                  to="/my-shops"
+                  className={`text-sm font-medium transition-colors hover:text-blue-600 ${
+                    isActive('/my-shops') ? 'text-blue-600' : 'text-gray-700'
+                  }`}
+                >
+                  My Shops
+                </Link>
+              )}
               {isAuthenticated && isAdmin && (
                 <Link
                   to="/admin"
@@ -160,9 +170,14 @@ export default function Layout({ children, currentPage }: LayoutProps) {
                 </Button>
               </Link>
               {isAuthenticated ? (
-                <Button variant="ghost" size="sm" onClick={logout}>
-                  Logout
-                </Button>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm font-medium text-gray-700 hidden sm:block">
+                    {getUserDisplayName()}
+                  </span>
+                  <Button variant="ghost" size="sm" onClick={logout}>
+                    Logout
+                  </Button>
+                </div>
               ) : (
                 <Link to="/login">
                   <Button variant="ghost" size="sm">
@@ -235,6 +250,17 @@ export default function Layout({ children, currentPage }: LayoutProps) {
             >
               My Garage
             </Link>
+            {isAuthenticated && (isMechanic || isMechanicOwner) && (
+              <Link
+                to="/my-shops"
+                className={`text-lg font-medium py-2 px-3 rounded-md transition-colors hover:bg-gray-100 ${
+                  isActive('/my-shops') ? 'text-blue-600 bg-gray-100' : 'text-gray-700'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                My Shops
+              </Link>
+            )}
             {isAuthenticated && isAdmin && (
               <Link
                 to="/admin"

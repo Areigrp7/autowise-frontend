@@ -3,9 +3,11 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 interface User {
   id: string;
   email: string;
-  role: 'customer' | 'shop' | 'admin';
+  role: 'customer' | 'mechanic' | 'admin';
   name?: string;
   businessName?: string;
+  first_name?: string;
+  last_name?: string;
   isVerified?: boolean;
 }
 
@@ -17,8 +19,9 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isCustomer: boolean;
-  isShop: boolean;
-  isShopOwner: boolean;
+  isMechanic: boolean;
+  isMechanicOwner: boolean;
+  getUserDisplayName: () => string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -72,6 +75,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('user');
   };
 
+  const getUserDisplayName = () => {
+    if (!user) return '';
+
+    if (user.role === 'admin') {
+      return 'Admin';
+    }
+
+    if (user.role === 'mechanic' && user.businessName) {
+      return user.businessName;
+    }
+
+    if (user.role === 'customer' && user.first_name) {
+      return user.first_name;
+    }
+
+    // Fallback to first part of email if no name available
+    return user.email.split('@')[0];
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -80,8 +102,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: !!token && !!user,
     isAdmin: user?.role === 'admin',
     isCustomer: user?.role === 'customer',
-    isShop: user?.role === 'shop',
-    isShopOwner: user?.role === 'shop'
+    isMechanic: user?.role === 'mechanic',
+    isMechanicOwner: user?.role === 'mechanic',
+    getUserDisplayName
   };
 
   return (

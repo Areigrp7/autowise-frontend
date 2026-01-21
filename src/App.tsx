@@ -24,6 +24,7 @@ import ShopProfile from './pages/ShopProfile'; // Import ShopProfile component
 import ShopDashboard from './pages/ShopDashboard'; // Import ShopDashboard component
 import SubscriptionManagement from './pages/SubscriptionManagement'; // Import SubscriptionManagement component
 import AdDashboard from './pages/AdDashboard'; // Import AdDashboard component
+import MyShops from './pages/MyShops'; // Import MyShops component
 import { CartProvider } from './context/CartContext'; // Import CartProvider
 import { AuthProvider } from './context/AuthContext'; // Import AuthProvider
 import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
@@ -154,20 +155,25 @@ const App = () => {
               <Route path="/login" element={<Login />} /> {/* Add Login route */}
               <Route path="/shop/:shopId" element={<ShopProfile />} /> {/* Public shop profile */}
               <Route path="/shop-dashboard" element={
-                <ProtectedRoute allowedRoles={['shop']}>
+                <ProtectedRoute allowedRoles={['mechanic']}>
                   <ShopDashboard />
                 </ProtectedRoute>
               } /> {/* Shop owner dashboard - Shop only */}
               <Route path="/subscription" element={
-                <ProtectedRoute allowedRoles={['shop']}>
+                <ProtectedRoute allowedRoles={['mechanic']}>
                   <SubscriptionManagement />
                 </ProtectedRoute>
               } /> {/* Subscription management - Shop only */}
               <Route path="/ads" element={
-                <ProtectedRoute allowedRoles={['shop']}>
+                <ProtectedRoute allowedRoles={['mechanic']}>
                   <AdDashboard />
                 </ProtectedRoute>
               } /> {/* Advertising dashboard - Shop only */}
+              <Route path="/my-shops" element={
+                <ProtectedRoute allowedRoles={['mechanic']}>
+                  <MyShops />
+                </ProtectedRoute>
+              } /> {/* My Shops - Shop owners only */}
               <Route path="/checkout" element={<Checkout />} /> {/* Add Checkout route */}
               <Route path="/checkout/success" element={<CheckoutSuccess />} /> {/* Add Checkout Success route */}
               <Route path="/checkout/cancel" element={<CheckoutCancel />} /> {/* Add Checkout Cancel route */}

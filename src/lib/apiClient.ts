@@ -169,4 +169,92 @@ export const deleteProduct = async (productId: string): Promise<any> => {
   return makeApiRequest('delete', `/parts/${productId}`);
 };
 
+// Shop API functions
+export interface ShopData {
+  name: string;
+  address: {
+    city: string;
+    state: string;
+    country: string;
+    zip_code: string;
+    address_line1: string;
+  };
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  phone?: string;
+  email?: string;
+  website?: string;
+  services?: string[];
+  specialties?: string[];
+  certifications?: string[];
+  hours?: Record<string, string>;
+  description?: string;
+  business_type?: string;
+  years_in_business?: number;
+  business_license?: string;
+  ein_tax_id?: string;
+}
+
+export interface ShopResponse {
+  id: number;
+  name: string;
+  rating: string;
+  reviews: number;
+  address: {
+    city: string;
+    state: string;
+    country: string;
+    zip_code: string;
+    address_line1: string;
+  };
+  phone: string;
+  email: string;
+  website: string | null;
+  specialties: string[] | null;
+  services: string[] | null;
+  certifications: string[] | null;
+  hours: Record<string, string> | null;
+  next_available: string | null;
+  pricing: any | null;
+  verified: boolean;
+  images: any | null;
+  description: string | null;
+  distanceunit: any | null;
+  created_at: string;
+  updated_at: string;
+  distance: any | null;
+  coordinates: any | null;
+  user_id: number;
+  business_type: string | null;
+  years_in_business: number | null;
+  business_license: string | null;
+  ein_tax_id: string | null;
+}
+
+export const createShop = async (shopData: ShopData): Promise<any> => {
+  return makeApiRequest('post', '/shops', shopData);
+};
+
+export const getUserShops = async (): Promise<any> => {
+  return makeApiRequest('get', '/shops/18');
+};
+
+export const getAllShops = async (): Promise<any> => {
+  return makeApiRequest('get', '/shops');
+};
+
+export const getShopById = async (shopId: string): Promise<any> => {
+  return makeApiRequest('get', `/shops/${shopId}`);
+};
+
+export const updateShop = async (shopId: string, shopData: Partial<ShopData>): Promise<any> => {
+  return makeApiRequest('put', `/shops/${shopId}`, shopData);
+};
+
+export const deleteShop = async (shopId: string): Promise<any> => {
+  return makeApiRequest('delete', `/shops/${shopId}`);
+};
+
 export default apiClient;

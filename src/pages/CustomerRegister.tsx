@@ -70,7 +70,7 @@ const CustomerRegister = () => {
               <div>
                 <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="firstName"
+                  id="first_name"
                   type="text"
                   placeholder="John"
                   value={firstName}
@@ -82,7 +82,7 @@ const CustomerRegister = () => {
               <div>
                 <Label htmlFor="lastName">Last Name</Label>
                 <Input
-                  id="lastName"
+                  id="last_name"
                   type="text"
                   placeholder="Doe"
                   value={lastName}

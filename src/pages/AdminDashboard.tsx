@@ -73,24 +73,33 @@ interface VehicleModel {
 
 interface OnboardingRequest {
   id: string;
-  businessName: string;
-  ownerName: string;
+  type: 'customer' | 'mechanic';
+  // Customer fields
+  first_name?: string;
+  last_name?: string;
+  // Shop fields
+  business_name?: string;
+  owner_first_name?: string;
+  owner_last_name?: string;
+  business_phone?: string;
+  street_address?: string;
+  // Common fields
   email: string;
-  phone: string;
-  address: string;
+  phone?: string;
   city: string;
   state: string;
-  zipCode: string;
-  businessType: string;
-  yearsInBusiness: string;
-  licenseNumber: string;
-  ein: string;
-  description: string;
-  documents: string[];
+  zip_code: string;
   status: 'pending' | 'under_review' | 'approved' | 'rejected';
   submittedAt: string;
   reviewedAt?: string;
   reviewerNotes?: string;
+  // Additional verification fields (would come from additional API calls)
+  businessType?: string;
+  yearsInBusiness?: string;
+  licenseNumber?: string;
+  ein?: string;
+  description?: string;
+  documents?: string[];
 }
 
 interface ApprovalItem {
@@ -180,18 +189,20 @@ export default function AdminDashboard() {
     { id: '4', makeId: '2', name: 'Accord', isActive: true }
   ]);
 
-  // Mock data for onboarding requests
+  // Mock data for onboarding requests (matching API payload structure)
   const [onboardingRequests, setOnboardingRequests] = useState<OnboardingRequest[]>([
     {
       id: '1',
-      businessName: 'QuickFix Auto Service',
-      ownerName: 'John Smith',
+      type: 'shop',
+      business_name: 'QuickFix Auto Service',
+      owner_first_name: 'John',
+      owner_last_name: 'Smith',
       email: 'john@quickfixauto.com',
-      phone: '(555) 123-4567',
-      address: '123 Main St',
+      business_phone: '+15551234567',
+      street_address: '123 Main St',
       city: 'Springfield',
       state: 'IL',
-      zipCode: '62701',
+      zip_code: '62701',
       businessType: 'Auto Repair Shop',
       yearsInBusiness: '5',
       licenseNumber: 'AR-12345',
@@ -203,14 +214,29 @@ export default function AdminDashboard() {
     },
     {
       id: '2',
-      businessName: 'Elite Auto Care',
-      ownerName: 'Sarah Johnson',
+      type: 'customer',
+      first_name: 'John',
+      last_name: 'Doe',
+      email: 'hidayatq@ssgmail.com',
+      phone: '+15551234567',
+      city: 'Springfield',
+      state: 'IL',
+      zip_code: '62704',
+      status: 'pending',
+      submittedAt: '2024-01-11'
+    },
+    {
+      id: '3',
+      type: 'shop',
+      business_name: 'Elite Auto Care',
+      owner_first_name: 'Sarah',
+      owner_last_name: 'Johnson',
       email: 'sarah@eliteautocare.com',
-      phone: '(555) 987-6543',
-      address: '456 Oak Ave',
+      business_phone: '+1234567890',
+      street_address: '456 Oak Ave',
       city: 'Chicago',
       state: 'IL',
-      zipCode: '60601',
+      zip_code: '60601',
       businessType: 'Luxury Vehicle Specialist',
       yearsInBusiness: '8',
       licenseNumber: 'AR-67890',
@@ -221,15 +247,17 @@ export default function AdminDashboard() {
       submittedAt: '2024-01-10'
     },
     {
-      id: '3',
-      businessName: "Mike's Garage",
-      ownerName: 'Mike Rodriguez',
+      id: '4',
+      type: 'shop',
+      business_name: "Mike's Garage",
+      owner_first_name: 'Mike',
+      owner_last_name: 'Rodriguez',
       email: 'mike@mikesgarage.com',
-      phone: '(555) 456-7890',
-      address: '789 Industrial Blvd',
+      business_phone: '+15554567890',
+      street_address: '789 Industrial Blvd',
       city: 'Detroit',
       state: 'MI',
-      zipCode: '48201',
+      zip_code: '48201',
       businessType: 'General Auto Repair',
       yearsInBusiness: '12',
       licenseNumber: 'AR-54321',
@@ -617,7 +645,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-3">
                     <CheckCircle className="h-6 w-6 text-green-600" />
                     <div>
-                      <p className="text-xl font-bold">{stats.approvedShops}</p>
+                      <p className="text-xl font-bold">{onboardingRequests.filter(r => r.status === 'approved').length}</p>
                       <p className="text-sm text-gray-600">Approved</p>
                     </div>
                   </div>
@@ -627,10 +655,10 @@ export default function AdminDashboard() {
               <Card>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <XCircle className="h-6 w-6 text-red-600" />
+                    <Users className="h-6 w-6 text-purple-600" />
                     <div>
-                      <p className="text-xl font-bold">{onboardingRequests.filter(r => r.status === 'rejected').length}</p>
-                      <p className="text-sm text-gray-600">Rejected</p>
+                      <p className="text-xl font-bold">{onboardingRequests.filter(r => r.type === 'customer').length}</p>
+                      <p className="text-sm text-gray-600">Customers</p>
                     </div>
                   </div>
                 </CardContent>
@@ -647,10 +675,10 @@ export default function AdminDashboard() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Business Name</TableHead>
-                      <TableHead>Owner</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Contact</TableHead>
                       <TableHead>Location</TableHead>
-                      <TableHead>Type</TableHead>
+                      <TableHead>Account Type</TableHead>
                       <TableHead>Submitted</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
@@ -659,17 +687,28 @@ export default function AdminDashboard() {
                   <TableBody>
                     {onboardingRequests.map(request => (
                       <TableRow key={request.id}>
-                        <TableCell className="font-medium">{request.businessName}</TableCell>
-                        <TableCell>{request.ownerName}</TableCell>
-                        <TableCell>{request.city}, {request.state}</TableCell>
-                        <TableCell>{request.businessType}</TableCell>
+                        <TableCell className="font-medium">
+                          {request.type === 'shop' ? request.business_name : `${request.first_name} ${request.last_name}`}
+                        </TableCell>
+                        <TableCell>
+                          {request.type === 'shop'
+                            ? `${request.owner_first_name} ${request.owner_last_name}`
+                            : request.email
+                          }
+                        </TableCell>
+                        <TableCell>{request.city}, {request.state} {request.zip_code}</TableCell>
+                        <TableCell>
+                          <Badge variant={request.type === 'shop' ? 'default' : 'secondary'}>
+                            {request.type === 'shop' ? 'Shop/Mechanic' : 'Customer'}
+                          </Badge>
+                        </TableCell>
                         <TableCell>{new Date(request.submittedAt).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Badge
                             variant={
                               request.status === 'approved' ? 'default' :
-                                request.status === 'rejected' ? 'destructive' :
-                                  request.status === 'under_review' ? 'secondary' : 'outline'
+                              request.status === 'rejected' ? 'destructive' :
+                              request.status === 'under_review' ? 'secondary' : 'outline'
                             }
                           >
                             {request.status.replace('_', ' ').toUpperCase()}
@@ -685,45 +724,73 @@ export default function AdminDashboard() {
                               </DialogTrigger>
                               <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                                 <DialogHeader>
-                                  <DialogTitle>Review Application: {request.businessName}</DialogTitle>
-                                  <DialogDescription>Detailed review of shop registration application</DialogDescription>
+                                  <DialogTitle>
+                                    Review {request.type === 'shop' ? 'Shop' : 'Customer'} Registration: {
+                                      request.type === 'shop'
+                                        ? request.business_name
+                                        : `${request.first_name} ${request.last_name}`
+                                    }
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    Detailed review of {request.type === 'shop' ? 'shop/mechanic' : 'customer'} registration application
+                                  </DialogDescription>
                                 </DialogHeader>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
                                   <div className="space-y-4">
                                     <div>
-                                      <h4 className="font-medium mb-2">Business Information</h4>
+                                      <h4 className="font-medium mb-2">
+                                        {request.type === 'shop' ? 'Business Information' : 'Customer Information'}
+                                      </h4>
                                       <div className="space-y-2 text-sm">
-                                        <p><strong>Business Name:</strong> {request.businessName}</p>
-                                        <p><strong>Owner:</strong> {request.ownerName}</p>
+                                        {request.type === 'shop' ? (
+                                          <>
+                                            <p><strong>Business Name:</strong> {request.business_name}</p>
+                                            <p><strong>Owner:</strong> {request.owner_first_name} {request.owner_last_name}</p>
+                                            <p><strong>Business Phone:</strong> {request.business_phone}</p>
+                                            <p><strong>Address:</strong> {request.street_address}, {request.city}, {request.state} {request.zip_code}</p>
+                                            {request.businessType && <p><strong>Business Type:</strong> {request.businessType}</p>}
+                                            {request.yearsInBusiness && <p><strong>Years in Business:</strong> {request.yearsInBusiness}</p>}
+                                          </>
+                                        ) : (
+                                          <>
+                                            <p><strong>Name:</strong> {request.first_name} {request.last_name}</p>
+                                            <p><strong>Phone:</strong> {request.phone}</p>
+                                            <p><strong>Location:</strong> {request.city}, {request.state} {request.zip_code}</p>
+                                          </>
+                                        )}
                                         <p><strong>Email:</strong> {request.email}</p>
-                                        <p><strong>Phone:</strong> {request.phone}</p>
-                                        <p><strong>Address:</strong> {request.address}, {request.city}, {request.state} {request.zipCode}</p>
-                                        <p><strong>Business Type:</strong> {request.businessType}</p>
-                                        <p><strong>Years in Business:</strong> {request.yearsInBusiness}</p>
                                       </div>
                                     </div>
 
-                                    <div>
-                                      <h4 className="font-medium mb-2">Licensing & Documentation</h4>
-                                      <div className="space-y-2 text-sm">
-                                        <p><strong>License Number:</strong> {request.licenseNumber}</p>
-                                        <p><strong>EIN:</strong> {request.ein}</p>
-                                        <p><strong>Documents:</strong></p>
-                                        <ul className="list-disc list-inside ml-4">
-                                          {request.documents.map((doc, index) => (
-                                            <li key={index} className="text-blue-600 hover:underline cursor-pointer">{doc}</li>
-                                          ))}
-                                        </ul>
+                                    {request.type === 'shop' && (request.licenseNumber || request.ein || request.documents) && (
+                                      <div>
+                                        <h4 className="font-medium mb-2">Licensing & Documentation</h4>
+                                        <div className="space-y-2 text-sm">
+                                          {request.licenseNumber && <p><strong>License Number:</strong> {request.licenseNumber}</p>}
+                                          {request.ein && <p><strong>EIN:</strong> {request.ein}</p>}
+                                          {request.documents && request.documents.length > 0 && (
+                                            <>
+                                              <p><strong>Documents:</strong></p>
+                                              <ul className="list-disc list-inside ml-4">
+                                                {request.documents.map((doc, index) => (
+                                                  <li key={index} className="text-blue-600 hover:underline cursor-pointer">{doc}</li>
+                                                ))}
+                                              </ul>
+                                            </>
+                                          )}
+                                        </div>
                                       </div>
-                                    </div>
+                                    )}
                                   </div>
 
                                   <div className="space-y-4">
-                                    <div>
-                                      <h4 className="font-medium mb-2">Business Description</h4>
-                                      <p className="text-sm bg-gray-50 p-3 rounded">{request.description}</p>
-                                    </div>
+                                    {request.type === 'shop' && request.description && (
+                                      <div>
+                                        <h4 className="font-medium mb-2">Business Description</h4>
+                                        <p className="text-sm bg-gray-50 p-3 rounded">{request.description}</p>
+                                      </div>
+                                    )}
 
                                     {request.reviewerNotes && (
                                       <div>
@@ -761,7 +828,7 @@ export default function AdminDashboard() {
                                       className="flex-1"
                                     >
                                       <CheckCircle className="h-4 w-4 mr-2" />
-                                      Approve Application
+                                      Approve {request.type === 'shop' ? 'Shop' : 'Customer'}
                                     </Button>
                                     <Button
                                       variant="outline"
@@ -771,9 +838,11 @@ export default function AdminDashboard() {
                                       <XCircle className="h-4 w-4 mr-2" />
                                       Reject Application
                                     </Button>
-                                    <Button variant="secondary" className="flex-1">
-                                      Request More Info
-                                    </Button>
+                                    {request.type === 'shop' && (
+                                      <Button variant="secondary" className="flex-1">
+                                        Request Documents
+                                      </Button>
+                                    )}
                                   </div>
                                 )}
                               </DialogContent>
